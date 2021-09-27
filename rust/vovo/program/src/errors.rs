@@ -19,10 +19,6 @@ pub enum VovoVaultError {
     #[error("Lamport balance below rent-exempt threshold")]
     NotRentExempt,
 
-    /// Bid account provided does not match the derived address.
-    #[error("Bid account provided does not match the derived address.")]
-    InvalidBidAccount,
-
     /// VovoVault account specified is invalid.
     #[error("VovoVault account specified is invalid.")]
     InvalidVovoVaultAccount,
@@ -30,22 +26,6 @@ pub enum VovoVaultError {
     /// Balance too low to make bid.
     #[error("Balance too low to make bid.")]
     BalanceTooLow,
-
-    /// VovoVault is not currently running.
-    #[error("VovoVault is not currently running.")]
-    InvalidState,
-
-    /// Bid is too small.
-    #[error("Bid is too small.")]
-    BidTooSmall,
-
-    /// Invalid transition, vault state may only transition: Created -> Started -> Stopped
-    #[error("Invalid vault state transition.")]
-    VovoVaultTransitionInvalid,
-
-    /// Invalid transition, ticket state may only transition: Bought -> Winned/NotWinned ->Claimed
-    #[error("Invalid ticket state transition.")]
-    TicketTransitionInvalid,
 
     /// Failed to derive an account from seeds.
     #[error("Failed to derive an account from seeds.")]
@@ -70,14 +50,6 @@ pub enum VovoVaultError {
     /// Authority not signer
     #[error("Authority not signer")]
     AuthorityNotSigner,
-
-    /// Numerical overflow
-    #[error("Numerical overflow")]
-    NumericalOverflowError,
-
-    /// Bidder pot token account does not match
-    #[error("Bidder pot token account does not match")]
-    BidderPotTokenAccountOwnerMismatch,
 
     /// Uninitialized
     #[error("Uninitialized")]
@@ -107,45 +79,13 @@ pub enum VovoVaultError {
     #[error("The revealing hash is invalid.")]
     InvalidReveal,
 
-    /// The pot for this bid is already empty.
-    #[error("The pot for this bid is already empty.")]
-    BidderPotEmpty,
-
     /// This is not a valid token program
     #[error(" This is not a valid token program")]
     InvalidTokenProgram,
 
-    /// Accept payment delegate should be none
-    #[error("Accept payment delegate should be none")]
-    DelegateShouldBeNone,
-
-    /// Accept payment close authority should be none
-    #[error("Accept payment close authority should be none")]
-    CloseAuthorityShouldBeNone,
-
     /// Data type mismatch
     #[error("Data type mismatch")]
     DataTypeMismatch,
-
-    /// Bid must be multiple of tick size
-    #[error("Bid must be multiple of tick size")]
-    BidMustBeMultipleOfTickSize,
-
-    /// During the gap window, gap between next lowest bid must be of a certain percentage
-    #[error("During the gap window, gap between next lowest bid must be of a certain percentage")]
-    GapBetweenBidsTooSmall,
-
-    /// Gap tick size percentage must be between 0 and 100
-    #[error("Gap tick size percentage must be between 0 and 100")]
-    InvalidGapTickSizePercentage,
-
-    /// Already ended
-    #[error("Already over end time")]
-    AlreadyOverEndDate,
-
-    /// Exceed available ticket amount
-    #[error("Exceed available ticket amount")]
-    ExceedTiketAmount,
 
     /// Invalid token pool address
     #[error("Invalid token pool address")]

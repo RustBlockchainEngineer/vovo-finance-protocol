@@ -44,6 +44,8 @@ struct Accounts<'a, 'b: 'a> {
     mint: &'a AccountInfo<'b>,
     transfer_authority: &'a AccountInfo<'b>,
     token_program: &'a AccountInfo<'b>,
+    rent: &'a AccountInfo<'b>,
+    system: &'a AccountInfo<'b>,
 }
 
 fn parse_accounts<'a, 'b: 'a>(
@@ -60,6 +62,8 @@ fn parse_accounts<'a, 'b: 'a>(
         mint: next_account_info(account_iter)?,
         transfer_authority: next_account_info(account_iter)?,
         token_program: next_account_info(account_iter)?,
+        rent: next_account_info(account_iter)?,
+        system: next_account_info(account_iter)?,
     };
 
     assert_owned_by(accounts.vault, program_id)?;
@@ -90,29 +94,55 @@ pub fn deposit<'r, 'b: 'r>(
     // Load the vault and verify this bid is valid.
     let mut vault = VovoVaultData::from_account_info(accounts.vault)?;
 
-    if accounts.depositor_info.data_is_empty() {
-        // create userinfo account
-    }
-    let mut user_info = UserInfo::from_account_info(accounts.depositor_info)?;
-
-    let bump_authority_seeds = &[
+    let transfer_authority_seeds = &[
         PREFIX.as_bytes(),
         program_id.as_ref(),
         accounts.vault.key.as_ref(),
         accounts.depositor.key.as_ref(),
     ];
 
+
+    if accounts.depositor_info.data_is_empty() {
+        // create userinfo account
+
+        let (user_info_authority, user_info_bump) = Pubkey::find_program_address(transfer_authority_seeds, program_id);
+
+        let user_info_size = mem::size_of::<UserInfo>();
+        
+        create_or_allocate_account_raw(
+            *program_id,
+            accounts.depositor_info,
+            accounts.rent,
+            accounts.system,
+            accounts.depositor,
+            user_info_size,
+            &[
+                PREFIX.as_bytes(),
+                program_id.as_ref(),
+                accounts.vault.key.as_ref(),
+                accounts.depositor.key.as_ref(),
+                &[user_info_bump],
+            ],
+        )?;
+        UserInfo {
+            owner: *accounts.depositor_info.key,
+            deposite_balance: 0,
+        }
+        .serialize(&mut *accounts.depositor_info.data.borrow_mut())?;
+    }
+    let mut user_info = UserInfo::from_account_info(accounts.depositor_info)?;
+
     // Transfer amount of SPL token to bid account.
     spl_token_transfer(TokenTransferParams {
         source: accounts.depositor_token.clone(),
         destination: accounts.pool_token.clone(),
         authority: accounts.transfer_authority.clone(),
-        authority_signer_seeds: bump_authority_seeds,
+        authority_signer_seeds: transfer_authority_seeds,
         token_program: accounts.token_program.clone(),
         amount: amount,
     })?;
 
-    user_info.owner = *accounts.depositor_info.key;
+    
     user_info.deposite_balance += amount;
 
     user_info.serialize(&mut *accounts.depositor_info.data.borrow_mut())?;
