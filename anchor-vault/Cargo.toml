@@ -1,4 +1,6 @@
 [workspace]
 members = [
-    "programs/vovo"
+    "programs/vovo",
+    "programs/stable-swap-n-pool-instructions/program",
+    "programs/audaces-perps/program"
 ]

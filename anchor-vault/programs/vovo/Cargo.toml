@@ -20,3 +20,6 @@ anchor-spl = { path = "../../../anchor/spl" }
 bytemuck = { version = "1.4.0" }
 spl-math = {version ="0.1.0", features = ["no-entrypoint"]}
 spl-token = {version ="3.2.0", features=["no-entrypoint"]}
+mercurial_stable_swap_n_pool_instructions = { path = "../stable-swap-n-pool-instructions/program" }
+audaces-protocol = { path = "../audaces-perps/program" }
+solana-program = "1.7.8"
