@@ -1,12 +1,9 @@
-pub mod utils_mercurial;
-
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, TokenAccount, Transfer, ID};
 
 use solana_program::{
     program::{ invoke_signed},
 };
-use utils_mercurial::*;
 
 #[program]
 pub mod vovo {
@@ -33,7 +30,11 @@ pub mod vovo {
         pub mercurial_pool_token_mint:Pubkey,
         pub mercurial_source_token:Pubkey,
         pub mercurial_lp_token:Pubkey,
-        pub mercurial_min_mint_amount: u64
+
+
+        pub mercurial_reward_token:Pubkey,
+
+        pub mercurial_withdraw_min_amount: u64
     }
 
     impl VovoData {
@@ -54,7 +55,11 @@ pub mod vovo {
             mercurial_pool_token_mint:Pubkey,
             mercurial_source_token:Pubkey,
             mercurial_lp_token:Pubkey,
-            mercurial_min_mint_amount: u64
+
+            mercurial_reward_token:Pubkey,
+
+            mercurial_withdraw_min_amount:u64
+
         ) -> Result<Self> {
             Ok(Self {
                 authority: *ctx.accounts.authority.key,
@@ -75,7 +80,10 @@ pub mod vovo {
                 mercurial_pool_token_mint,
                 mercurial_source_token,
                 mercurial_lp_token,
-                mercurial_min_mint_amount
+
+                mercurial_reward_token,
+
+                mercurial_withdraw_min_amount
             })
         }
         pub fn deposit(&mut self, ctx: Context<Deposit>, amount: u64)->Result<()>{
@@ -94,44 +102,6 @@ pub mod vovo {
             token::transfer(cpi_ctx, amount)?;
 
             ctx.accounts.user_info.deposit_balance += amount;
-
-            Ok(())
-        }
-        pub fn deposit_to_mercurial(&mut self, ctx: Context<MercurialDeposit>, amount: u64)->Result<()>{
-            
-            let mercurial_swap_tokens = vec![self.mercurial_swap_token];
-            let ix = mercurial_stable_swap_n_pool_instructions::instruction::add_liquidity(
-                &self.mercurial_program_id,
-                &self.mercurial_swap_account,
-                &self.mercurial_token_program_id,
-                &self.mercurial_pool_authority,
-                &self.mercurial_transfer_authority,
-                vec![&self.mercurial_swap_token],
-                &self.mercurial_pool_token_mint,
-                vec![&self.mercurial_source_token],
-                &self.mercurial_lp_token,
-                vec![amount],
-                self.mercurial_min_mint_amount
-            )?;
-
-            let pool_bytes = pool.to_bytes();
-            let authority_signature_seeds = [&pool_bytes[..32], &[nonce]];
-            let signers = &[&authority_signature_seeds[..]];
-
-            invoke_signed(
-                &ix,
-                &[
-                    ctx.accounts.mercurial_swap_account, 
-                    ctx.accounts.mercurial_token_program_id, 
-                    ctx.accounts.mercurial_pool_authority, 
-                    ctx.accounts.mercurial_transfer_authority,
-                    ctx.accounts.mercurial_swap_token,
-                    ctx.accounts.mercurial_pool_token_mint,
-                    ctx.accounts.mercurial_source_token,
-                    ctx.accounts.mercurial_lp_token
-                    ],
-                signers,
-            )?;
 
             Ok(())
         }
@@ -165,6 +135,132 @@ pub mod vovo {
             token::transfer(cpi_ctx, _amount)?;
 
             ctx.accounts.user_info.deposit_balance -= _amount;
+
+            Ok(())
+        }
+        pub fn add_reward(&mut self, ctx: Context<AddReward>, amount: u64)->Result<()>{
+            
+            // transfer from user to pool
+            let cpi_accounts = Transfer {
+                from: ctx.accounts.from.clone(),
+                to: ctx.accounts.token_reward_account.to_account_info().clone(),
+                authority: ctx.accounts.owner.clone(),
+            };
+
+            let cpi_program = ctx.accounts.token_program.clone();
+            
+            let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+
+            token::transfer(cpi_ctx, amount)?;
+
+            Ok(())
+        }
+        pub fn deposit_to_mercurial(&mut self, ctx: Context<MercurialDeposit>, amount: u64,min_mint_amount:u64)->Result<()>{
+            
+            let ix = mercurial_stable_swap_n_pool_instructions::instruction::add_liquidity(
+                &self.mercurial_program_id,
+                &self.mercurial_swap_account,
+                &self.mercurial_token_program_id,
+                &self.mercurial_pool_authority,
+                &self.mercurial_transfer_authority,
+                vec![&self.mercurial_swap_token],
+                &self.mercurial_pool_token_mint,
+                vec![&self.mercurial_source_token],
+                &self.mercurial_lp_token,
+                vec![amount],
+                min_mint_amount
+            )?;
+
+            let pool_bytes = ctx.accounts.vovo_data.key().to_bytes();
+            let authority_signature_seeds = [&pool_bytes[..32], &[ctx.accounts.vovo_data.nonce]];
+            let signers = &[&authority_signature_seeds[..]];
+
+            invoke_signed(
+                &ix,
+                &[
+                    ctx.accounts.mercurial_swap_account.clone(), 
+                    ctx.accounts.mercurial_token_program_id.clone(), 
+                    ctx.accounts.mercurial_pool_authority.clone(), 
+                    ctx.accounts.mercurial_transfer_authority.clone(),
+                    ctx.accounts.mercurial_swap_token.clone(),
+                    ctx.accounts.mercurial_pool_token_mint.clone(),
+                    ctx.accounts.mercurial_source_token.clone(),
+                    ctx.accounts.mercurial_lp_token.clone()
+                    ],
+                signers,
+            )?;
+
+            Ok(())
+        }
+        pub fn withdraw_from_mercurial(&mut self, ctx: Context<MercurialWithdraw>, amount: u64, mercurial_swap_nonce: u8)->Result<()>{
+            
+            let ix = mercurial_stable_swap_n_pool_instructions::instruction::remove_liquidity(
+                &self.mercurial_program_id,
+                &self.mercurial_swap_account,
+                &self.mercurial_token_program_id,
+                &self.mercurial_pool_authority,
+                &self.mercurial_transfer_authority,
+                vec![&self.mercurial_swap_token],
+                &self.mercurial_pool_token_mint,
+                vec![&self.mercurial_source_token],
+                &self.mercurial_lp_token,
+                amount,
+                vec![self.mercurial_withdraw_min_amount]
+            )?;
+
+            let pool_bytes = self.mercurial_swap_account.to_bytes();
+            let authority_signature_seeds = [&pool_bytes[..32], &[mercurial_swap_nonce]];
+            let signers = &[&authority_signature_seeds[..]];
+
+            invoke_signed(
+                &ix,
+                &[
+                    ctx.accounts.mercurial_swap_account.clone(), 
+                    ctx.accounts.mercurial_token_program_id.clone(), 
+                    ctx.accounts.mercurial_pool_authority.clone(), 
+                    ctx.accounts.mercurial_transfer_authority.clone(),
+                    ctx.accounts.mercurial_swap_token.clone(),
+                    ctx.accounts.mercurial_pool_token_mint.clone(),
+                    ctx.accounts.mercurial_dest_token.clone(),
+                    ctx.accounts.mercurial_lp_token.clone()
+                    ],
+                signers,
+            )?;
+
+            Ok(())
+        }
+        pub fn exchange_from_mercurial(&mut self, ctx: Context<MercurialExchange>, amount: u64,min_out_amount: u64, mercurial_swap_nonce: u8)->Result<()>{
+            
+            let ix = mercurial_stable_swap_n_pool_instructions::instruction::exchange(
+                &self.mercurial_program_id,
+                &self.mercurial_swap_account,
+                &self.mercurial_token_program_id,
+                &self.mercurial_pool_authority,
+                &self.mercurial_transfer_authority,
+                vec![&self.mercurial_swap_token],
+                &self.mercurial_reward_token,
+                &self.mercurial_source_token,
+                amount,
+                min_out_amount,
+            )?;
+
+            let pool_bytes = self.mercurial_swap_account.to_bytes();
+            let authority_signature_seeds = [&pool_bytes[..32], &[mercurial_swap_nonce]];
+            let signers = &[&authority_signature_seeds[..]];
+
+            invoke_signed(
+                &ix,
+                &[
+                    ctx.accounts.mercurial_swap_account.clone(), 
+                    ctx.accounts.mercurial_token_program_id.clone(), 
+                    ctx.accounts.mercurial_pool_authority.clone(), 
+                    ctx.accounts.mercurial_transfer_authority.clone(),
+                    ctx.accounts.mercurial_swap_token.clone(),
+                    ctx.accounts.mercurial_source_token.clone(),
+                    ctx.accounts.mercurial_dest_token.clone(),
+                    ],
+                signers,
+            )?;
 
             Ok(())
         }
@@ -205,18 +301,7 @@ pub struct Deposit<'info> {
     #[account("token_program.key == &token::ID")]
     token_program: AccountInfo<'info>,
 }
-#[derive(Accounts)]
-pub struct MercurialDeposit<'info> {
-    token_program: AccountInfo<'info>,
-    mercurial_swap_account:AccountInfo<'info>,
-    mercurial_token_program_id:AccountInfo<'info>,
-    mercurial_pool_authority:AccountInfo<'info>,
-    mercurial_transfer_authority:AccountInfo<'info>,
-    mercurial_swap_token:AccountInfo<'info>,
-    mercurial_pool_token_mint:AccountInfo<'info>,
-    mercurial_source_token:AccountInfo<'info>,
-    mercurial_lp_token:AccountInfo<'info>,
-}
+
 #[derive(Accounts)]
 pub struct Withdraw<'info> {
     vovo_data: ProgramAccount<'info, VovoData>,
@@ -230,6 +315,56 @@ pub struct Withdraw<'info> {
     token_program: AccountInfo<'info>,
 }
 
+#[derive(Accounts)]
+pub struct AddReward<'info> {
+    vovo_data: ProgramAccount<'info, VovoData>,
+    #[account(mut)]
+    from: AccountInfo<'info>,
+    token_reward_account: Account<'info, TokenAccount>,
+    owner: AccountInfo<'info>,
+    #[account("token_program.key == &token::ID")]
+    token_program: AccountInfo<'info>,
+}
+#[derive(Accounts)]
+pub struct MercurialDeposit<'info> {
+    token_program: AccountInfo<'info>,
+    vovo_data: ProgramAccount<'info, VovoData>,
+    mercurial_swap_account:AccountInfo<'info>,
+    mercurial_token_program_id:AccountInfo<'info>,
+    mercurial_pool_authority:AccountInfo<'info>,
+    mercurial_transfer_authority:AccountInfo<'info>,
+    mercurial_swap_token:AccountInfo<'info>,
+    mercurial_pool_token_mint:AccountInfo<'info>,
+    mercurial_source_token:AccountInfo<'info>,
+    mercurial_lp_token:AccountInfo<'info>,
+}
+#[derive(Accounts)]
+pub struct MercurialWithdraw<'info> {
+    token_program: AccountInfo<'info>,
+    vovo_data: ProgramAccount<'info, VovoData>,
+    mercurial_swap_account:AccountInfo<'info>,
+    mercurial_token_program_id:AccountInfo<'info>,
+    mercurial_pool_authority:AccountInfo<'info>,
+    mercurial_transfer_authority:AccountInfo<'info>,
+    mercurial_swap_token:AccountInfo<'info>,
+    mercurial_pool_token_mint:AccountInfo<'info>,
+    mercurial_dest_token:AccountInfo<'info>,
+    mercurial_lp_token:AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct MercurialExchange<'info> {
+    token_program: AccountInfo<'info>,
+    vovo_data: ProgramAccount<'info, VovoData>,
+    mercurial_swap_account:AccountInfo<'info>,
+    mercurial_token_program_id:AccountInfo<'info>,
+    mercurial_pool_authority:AccountInfo<'info>,
+    mercurial_transfer_authority:AccountInfo<'info>,
+    mercurial_swap_token:AccountInfo<'info>,
+    mercurial_pool_token_mint:AccountInfo<'info>,
+    mercurial_source_token:AccountInfo<'info>,
+    mercurial_dest_token:AccountInfo<'info>,
+}
 #[derive(Accounts)]
 pub struct InitializeUserInfo<'info> {
     owner: AccountInfo<'info>,
