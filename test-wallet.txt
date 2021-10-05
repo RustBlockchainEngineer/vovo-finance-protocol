@@ -1,0 +1,6 @@
+==================================================================================
+pubkey: 6SCNr1Qgany9thbERfKkbJLueySF8FxazPQG9VaupdMm
+==================================================================================
+Save this seed phrase and your BIP39 passphrase to recover your new keypair:
+tobacco depart invest gift notable future coach gentle connect improve april owner
+==================================================================================
