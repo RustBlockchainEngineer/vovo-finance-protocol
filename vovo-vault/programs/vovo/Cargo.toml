@@ -1,0 +1,25 @@
+[package]
+name = "vovo"
+version = "0.1.0"
+description = "Created with Anchor"
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "vovo"
+
+[features]
+no-entrypoint = []
+no-idl = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = { version ="0.17.0" }
+anchor-spl = { version ="0.17.0" }
+bytemuck = { version = "1.4.0" }
+spl-math = {version ="0.1.0", features = ["no-entrypoint"]}
+spl-token = {version ="3.2.0", features=["no-entrypoint"]}
+mercurial_stable_swap_n_pool_instructions = { path = "../../../libs/stable-swap-n-pool-instructions/program"}
+audaces-protocol = { path = "../../../libs/audaces-perps/program", features = ["no-entrypoint"] }
+solana-program = "1.7.8"
