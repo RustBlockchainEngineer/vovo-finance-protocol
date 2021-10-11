@@ -403,20 +403,13 @@ pub mod vovo {
 
     }
     
-    #[account]
-    pub struct UserInfo {
-        owner: Pubkey,
-        deposit_balance: u64,
-    }
+    
+}
 
-    impl UserInfo {
-        pub fn new(ctx: Context<InitializeUserInfo>) -> Result<Self> {
-            Ok(Self {
-                owner:*ctx.accounts.owner.key,
-                deposit_balance: 0
-            })
-        }
-    }
+#[account]
+pub struct UserInfo {
+    owner: Pubkey,
+    deposit_balance: u64,
 }
 
 #[derive(Accounts)]
@@ -437,6 +430,7 @@ pub struct Deposit<'info> {
     owner: AccountInfo<'info>,
     #[account("token_program.key == &token::ID")]
     token_program: AccountInfo<'info>,
+    rent: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
@@ -499,7 +493,6 @@ pub struct MercurialWithdraw<'info> {
 pub struct Poke<'info> {
     token_program: AccountInfo<'info>,
     vovo_data: ProgramAccount<'info, VovoData>,
-    token_reward_account: Account<'info, TokenAccount>,
 
     mercurial_program:AccountInfo<'info>,
     mercurial_swap_account:AccountInfo<'info>,
