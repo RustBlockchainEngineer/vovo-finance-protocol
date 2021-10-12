@@ -349,7 +349,6 @@ pub mod vovo {
                 &[
                     ctx.accounts.token_program.clone(),
                     ctx.accounts.market_account.clone(),
-                    ctx.accounts.market_signer_account.clone(),
                     ctx.accounts.market_vault.to_account_info().clone(),
                     ctx.accounts.open_positions_account.clone(),
                     ctx.accounts.source_owner.clone(),

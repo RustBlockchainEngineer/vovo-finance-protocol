@@ -14,23 +14,37 @@ const {
 const {
     SwapState
 } = require("./mercurial_state");
+
+
+const USER_WALLET = "BRmxAJ3ThceU2SXt6weyXarRNvAwZUtKuKbzSRneRxJn";
+const USER_MER_ACCOUNT = "GjHHyP3cGWvgbdUhutjLd3dauKoWcqvSEifC13c3gJ3A";
+const USER_USDC_ACCOUNT = "77YP62d5vwtcuR7V4LvfZGEC1HomS4NkrhWQJyNznXA";
+const USER_MERCURIAL_LP_ACCOUNT = "BkURLf4bzvvZeThFfQNTsqsFkuCLpkuaaHKNJxCiY8r3";
+
 const USDC_MINT_ADDRESS = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 const MER_MINT_ADDRESS = "MERt85fc5boKw3BW1eYdxonEuJNvXbiMbs6hvheau5K";
-const USER_MER_ACCOUNT = "MERt85fc5boKw3BW1eYdxonEuJNvXbiMbs6hvheau5K";
-const USER_USDC_ACCOUNT = "MERt85fc5boKw3BW1eYdxonEuJNvXbiMbs6hvheau5K";
 
 const MERCURIAL_PROGRAM = "MERLuDFBMmsHnsBPZw2sDQZHvXFMwp8EdjudcU2HKky";
 const MERCURIAL_SWAP_ACCOUNT = "USD6kaowtDjwRkN5gAjw1PDMQvc9xRp8xW9GK8Z5HBA";
-const MERCURIAL_LP_MINT = "USD6kaowtDjwRkN5gAjw1PDMQvc9xRp8xW9GK8Z5HBA";
-const USER_LP_ACCOUNT = "USD6kaowtDjwRkN5gAjw1PDMQvc9xRp8xW9GK8Z5HBA";
+const MERCURIAL_LP_MINT = "57h4LEnBooHrKbacYWGCFghmrTzYPVn8PwZkzTzRLvHa";
 
 const BONFIDA_PROGRAM = "WvmTNLpGMVbwJVYztYL4Hnsy82cJhQorxjnnXcRm3b6";
+const BONFIDA_MARKET_SOL = "jeVdn6rxFPLpCH9E6jmk39NTNx2zgTmKiVXBDiApXaV";
+const BONFIDA_MARKET_VAULT_SOL = "LXMAV4hRP44N9VoL3XsSo3HqHP2kL1GxqwvJ8qGitv1";
+const BONFIDA_MARKET_SIGNER_SOL = "G3zuVcG5uGvnw4dCAWeD7BvTo4CTt2vXsgUjqACnXLpN";
+const BONFIDA_TARGET_SOL = USER_USDC_ACCOUNT;
+const BONFIDA_OPEN_POSITION_SOL = "CJ3XSni4VQjHR7mXD2ybtJFf99V14rzPG6QTAULDJrNX";
+const BONFIDA_SOURCE_OWNER = USER_WALLET;
+const BONFIDA_SOURCE_TOKEN = USER_USDC_ACCOUNT;
+const TRADE_LABEL = "TradeRecord11111111111111111111111111111111";
 
 describe('vovo', () => {
 
     // At first , Prepare USDC, MER token accounts and amount in your wallet
     // Configure the client to use the local cluster.
     anchor.setProvider(anchor.Provider.env());
+
+    const walletPubkey = new PublicKey(USER_WALLET);
 
     it('Is initialized!', async () => {
         // Add your test here.
@@ -77,7 +91,7 @@ describe('vovo', () => {
             USDCRewardTokenAccount,
             {
                 accounts:{
-                    authority: program.provider.wallet.publicKey,
+                    authority: walletPubkey,
                     token_mint: USDCPubkey,
                     token_pool_account: USDCPoolTokenAccount,
                 }
@@ -87,7 +101,7 @@ describe('vovo', () => {
         const [userInfoAccount, userBump] = await PublicKey.findProgramAddress(
             [
                 Buffer.from(anchor.utils.bytes.utf8.encode("vovo-user-seed")),
-                wallet.publicKey.toBuffer(),
+                walletPubkey.toBuffer(),
             ],
             program.programId
         );
@@ -99,7 +113,7 @@ describe('vovo', () => {
             await program.rpc.createUser(userBump, {
                 accounts:{
                     userInfo:userInfoAccount,
-                    owner: wallet.publicKey,
+                    owner: walletPubkey,
                     rent: anchor.web3.SYSVAR_RENT_PUBKEY,
                     systemProgram:anchor.web3.SystemProgram.programId
                 }
@@ -113,7 +127,7 @@ describe('vovo', () => {
                 userInfo: userInfoAccount,
                 from:userUSDCPubkey,
                 tokenPoolAccount:USDCPoolTokenAccount,
-                owner: program.provider.wallet.publicKey,
+                owner: walletPubkey,
                 tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
                 rent: anchor.web3.SYSVAR_RENT_PUBKEY,
             }
@@ -125,7 +139,7 @@ describe('vovo', () => {
                 vovoData: program.state.address(),
                 from:userMERPubkey,
                 tokenRewardAccount:MERRewardTokenAccount,
-                owner: program.provider.wallet.publicKey,
+                owner: walletPubkey,
                 tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
             }
         });
@@ -137,7 +151,7 @@ describe('vovo', () => {
             [mercurialSwapAccount.toBuffer()],
             mercurialProgram
           )
-        const mercurialTransferAuthority = provider.wallet.publicKey;
+        const mercurialTransferAuthority = walletPubkey;
         const mercurialSwapToken = userUSDCPubkey;
 
         
@@ -150,7 +164,7 @@ describe('vovo', () => {
         // const mercurialPoolToken_mint = swapState.poolMint;
         const mercurialPoolTokenMint = new PublicKey(MERCURIAL_LP_MINT);
         const tokenPool = USDCPoolTokenAccount;
-        const mercurialLpToken = new PublicKey(USER_LP_ACCOUNT);
+        const mercurialLpToken = new PublicKey(USER_MERCURIAL_LP_ACCOUNT);
 
         // step3
         await program.state.rpc.earn(new anchor.BN(1 * 1000000), {
@@ -183,11 +197,11 @@ describe('vovo', () => {
         const leverage = 15;
         
         const audacesProtocolProgramId = new PublicKey(BONFIDA_PROGRAM);
-        const marketAccount = new PublicKey();
-        const marketSignerAccount = new PublicKey();
-        const marketVault = new PublicKey();
-        const targetAccount = new PublicKey();
-        const openPositionsOwnerAccount = new PublicKey();
+        const marketAccount = new PublicKey(BONFIDA_MARKET_SOL);
+        const marketSignerAccount = new PublicKey(BONFIDA_MARKET_SIGNER_SOL);
+        const marketVault = new PublicKey(BONFIDA_MARKET_VAULT_SOL);
+        const targetAccount = new PublicKey(BONFIDA_TARGET_SOL);
+        const openPositionsOwnerAccount = walletPubkey;
         const oracleAccount = new PublicKey();
         const instanceAccount = new PublicKey();
         const userAccount = new PublicKey();
@@ -195,12 +209,12 @@ describe('vovo', () => {
         const bonfidaBnb = new PublicKey();
         const memoryPage = new PublicKey();
 
-        const sourceOwner = new PublicKey();
-        const sourceTokenAccount = new PublicKey();
-        const openPositionsAccount = new PublicKey();
+        const sourceOwner = new PublicKey(BONFIDA_SOURCE_OWNER);
+        const sourceTokenAccount = new PublicKey(BONFIDA_SOURCE_TOKEN);
+        const openPositionsAccount = new PublicKey(BONFIDA_OPEN_POSITION_SOL);
 
         const clockSysvar = anchor.web3.SYSVAR_CLOCK_PUBKEY;
-        const tradeLabel = new PublicKey();
+        const tradeLabel = new PublicKey(TRADE_LABEL);
         
         //step4
         await program.state.rpc.bonfidaPoke(
@@ -266,7 +280,7 @@ describe('vovo', () => {
                 to:userUSDCPubkey,
                 tokenPoolAccount:USDCPoolTokenAccount,
                 poolSigner:poolSigner,
-                owner: program.provider.wallet.publicKey,
+                owner: walletPubkey,
                 tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
 
                 mercurialProgram,
