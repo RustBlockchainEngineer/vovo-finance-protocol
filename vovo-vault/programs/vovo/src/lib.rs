@@ -402,14 +402,20 @@ pub mod vovo {
         }
 
     }
-    
-    
+    pub fn create_user(ctx: Context<CreateUser>, nonce: u8)->ProgramResult{
+        ctx.accounts.user_info.owner = *ctx.accounts.owner.key;
+        ctx.accounts.user_info.deposit_balance = 0;
+        ctx.accounts.user_info.bump = nonce;
+        Ok(())
+    }
 }
 
 #[account]
+#[derive(Default)]
 pub struct UserInfo {
     owner: Pubkey,
     deposit_balance: u64,
+    bump: u8
 }
 
 #[derive(Accounts)]
@@ -423,6 +429,7 @@ pub struct InitializeVovoData<'info> {
 #[derive(Accounts)]
 pub struct Deposit<'info> {
     vovo_data: ProgramAccount<'info, VovoData>,
+    #[account(mut)]
     user_info: ProgramAccount<'info, UserInfo>,
     #[account(mut)]
     from: AccountInfo<'info>,
@@ -433,9 +440,25 @@ pub struct Deposit<'info> {
     rent: AccountInfo<'info>,
 }
 
+
+#[derive(Accounts)]
+#[instruction(bump: u8)]
+pub struct CreateUser<'info> {
+    #[account(
+    init,
+    seeds = [b"vovo-user-seed", owner.key.as_ref()],
+    bump = bump,
+    payer = owner,
+    )] 
+    user_info: ProgramAccount<'info, UserInfo>,
+    owner: AccountInfo<'info>,
+    rent: Sysvar<'info, Rent>,
+    system_program: AccountInfo<'info>,
+}
 #[derive(Accounts)]
 pub struct Withdraw<'info> {
     vovo_data: ProgramAccount<'info, VovoData>,
+    #[account(mut)]
     user_info: ProgramAccount<'info, UserInfo>,
     #[account(mut)]
     to: AccountInfo<'info>,

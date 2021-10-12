@@ -20,7 +20,6 @@ const USER_USDC_ACCOUNT = "MERt85fc5boKw3BW1eYdxonEuJNvXbiMbs6hvheau5K";
 const MERCURIAL_PROGRAM = "MERLuDFBMmsHnsBPZw2sDQZHvXFMwp8EdjudcU2HKky";
 const BONFIDA_PROGRAM = "WvmTNLpGMVbwJVYztYL4Hnsy82cJhQorxjnnXcRm3b6";
 
-
 describe('vovo', () => {
 
     // At first , Prepare USDC, MER token accounts and amount in your wallet
@@ -78,10 +77,29 @@ describe('vovo', () => {
                 }
             }
         );
+        return;
 
-        const userInfoAccount = new PublicKey();
+        const [userInfoAccount, userBump] = await PublicKey.findProgramAddress(
+            [
+                Buffer.from(anchor.utils.bytes.utf8.encode("vovo-user-seed")),
+                wallet.publicKey.toBuffer(),
+            ],
+            program.programId
+        );
         const userMERPubkey = new PublicKey(USER_MER_ACCOUNT);
         const userUSDCPubkey = new PublicKey(USER_USDC_ACCOUNT);
+
+        let userInfo = await program.account.userInfo.fetch(userInfoAccount);
+        if(!userInfo){
+            await program.rpc.createUser(userBump, {
+                accounts:{
+                    userInfo:userInfoAccount,
+                    owner: wallet.publicKey,
+                    rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+                    systemProgram:anchor.web3.SystemProgram.programId
+                }
+            });
+        }
 
         // step1 -  user deposits some USDC to pool
         await program.state.rpc.deposit(new anchor.BN(10 * 1000000), {
@@ -106,7 +124,6 @@ describe('vovo', () => {
                 tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
             }
         });
-
 
         const mercurialProgram = new PublicKey(MERCURIAL_PROGRAM);
         const mercurialSwapAccount = new PublicKey();
