@@ -11,13 +11,19 @@ const {
     Commitment,
     Transaction
 } = require("@solana/web3.js");
-
+const {
+    SwapState
+} = require("./mercurial_state");
 const USDC_MINT_ADDRESS = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 const MER_MINT_ADDRESS = "MERt85fc5boKw3BW1eYdxonEuJNvXbiMbs6hvheau5K";
 const USER_MER_ACCOUNT = "MERt85fc5boKw3BW1eYdxonEuJNvXbiMbs6hvheau5K";
 const USER_USDC_ACCOUNT = "MERt85fc5boKw3BW1eYdxonEuJNvXbiMbs6hvheau5K";
 
 const MERCURIAL_PROGRAM = "MERLuDFBMmsHnsBPZw2sDQZHvXFMwp8EdjudcU2HKky";
+const MERCURIAL_SWAP_ACCOUNT = "USD6kaowtDjwRkN5gAjw1PDMQvc9xRp8xW9GK8Z5HBA";
+const MERCURIAL_LP_MINT = "USD6kaowtDjwRkN5gAjw1PDMQvc9xRp8xW9GK8Z5HBA";
+const USER_LP_ACCOUNT = "USD6kaowtDjwRkN5gAjw1PDMQvc9xRp8xW9GK8Z5HBA";
+
 const BONFIDA_PROGRAM = "WvmTNLpGMVbwJVYztYL4Hnsy82cJhQorxjnnXcRm3b6";
 
 describe('vovo', () => {
@@ -77,7 +83,6 @@ describe('vovo', () => {
                 }
             }
         );
-        return;
 
         const [userInfoAccount, userBump] = await PublicKey.findProgramAddress(
             [
@@ -126,14 +131,26 @@ describe('vovo', () => {
         });
 
         const mercurialProgram = new PublicKey(MERCURIAL_PROGRAM);
-        const mercurialSwapAccount = new PublicKey();
+        const mercurialSwapAccount = new PublicKey(MERCURIAL_SWAP_ACCOUNT);
         const mercurialTokenProgramId = TokenInstructions.TOKEN_PROGRAM_ID;
-        const mercurialPoolAuthority = new PublicKey();
+        const [mercurialPoolAuthority, nonce] = await PublicKey.findProgramAddress(
+            [mercurialSwapAccount.toBuffer()],
+            mercurialProgram
+          )
         const mercurialTransferAuthority = provider.wallet.publicKey;
-        const mercurialSwapToken = new PublicKey();
-        const mercurialPoolToken_mint = new PublicKey();
-        const tokenPool = new PublicKey();
-        const mercurialLpToken = new PublicKey();
+        const mercurialSwapToken = userUSDCPubkey;
+
+        
+        // const data = await loadAccount(provider, mercurialSwapAccount, mercurialProgram);
+        // const swapState = SwapState.decode(data)
+        // if (!swapState.isInitialized) {
+        //     console.log(`Invalid mercurial swap state`)
+        // }
+        
+        // const mercurialPoolToken_mint = swapState.poolMint;
+        const mercurialPoolTokenMint = new PublicKey(MERCURIAL_LP_MINT);
+        const tokenPool = USDCPoolTokenAccount;
+        const mercurialLpToken = new PublicKey(USER_LP_ACCOUNT);
 
         // step3
         await program.state.rpc.earn(new anchor.BN(1 * 1000000), {
@@ -147,7 +164,7 @@ describe('vovo', () => {
                 mercurialPoolAuthority ,
                 mercurialTransferAuthority,
                 mercurialSwapToken,
-                mercurialPoolToken_mint,
+                mercurialPoolTokenMint,
                 tokenPool,
                 mercurialLpToken
             }
@@ -265,3 +282,19 @@ describe('vovo', () => {
     });
     
 });
+
+
+
+async function loadAccount(provider, address, programId){
+    const accountInfo = await provider.connection.getAccountInfo(address)
+    if (accountInfo === null) {
+      throw new Error('Failed to find account')
+    }
+  
+    if (!accountInfo.owner.equals(programId)) {
+      throw new Error(`Invalid owner: ${JSON.stringify(accountInfo.owner)}`)
+    }
+  
+    return Buffer.from(accountInfo.data)
+  }
+  
