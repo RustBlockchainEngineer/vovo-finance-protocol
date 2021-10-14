@@ -134,16 +134,16 @@ describe('vovo', () => {
             }
         });
 
-        // step2
-        await program.state.rpc.addReward(new anchor.BN(5 * 1000000), {
-            accounts: {
-                vovoData: program.state.address(),
-                from:userMERPubkey,
-                tokenRewardAccount:MERRewardTokenAccount,
-                owner: walletPubkey,
-                tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
-            }
-        });
+        // step2 - no need
+        // await program.state.rpc.addReward(new anchor.BN(5 * 1000000), {
+        //     accounts: {
+        //         vovoData: program.state.address(),
+        //         from:userMERPubkey,
+        //         tokenRewardAccount:MERRewardTokenAccount,
+        //         owner: walletPubkey,
+        //         tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
+        //     }
+        // });
 
         const mercurialProgram = new PublicKey(MERCURIAL_PROGRAM);
         const mercurialSwapAccount = new PublicKey(MERCURIAL_SWAP_ACCOUNT);

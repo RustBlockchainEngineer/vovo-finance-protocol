@@ -6,6 +6,9 @@ use solana_program::{
 };
 use audaces_protocol::state::PositionType;
 
+mod utils;
+use utils::*;
+
 #[program]
 pub mod vovo {
     use super::*;
@@ -46,6 +49,7 @@ pub mod vovo {
             performance_fee: u64, 
             leverage: u64, 
             total_trade_profit: u64,
+            user_account_size: u64,
 
             mer_reward_token:Pubkey,
             usdc_reward_token:Pubkey,
@@ -65,6 +69,32 @@ pub mod vovo {
             // mercurial_withdraw_min_amount:u64
 
         ) -> Result<Self> {
+
+
+            let seeds = [
+                ctx.accounts.bonfida_program_id.key.as_ref(),
+                &(*ctx.accounts.user_account.key).to_bytes(),
+            ];
+
+            // Derive the address we'll store the lottery in, and confirm it matches what we expected the
+            // user to provide.
+            let (_authority, bump) = Pubkey::find_program_address(&seeds, ctx.accounts.bonfida_program_id.key);
+
+            create_or_allocate_account_raw(
+                *ctx.accounts.bonfida_program_id.key,
+                &ctx.accounts.user_account,
+                &ctx.accounts.rent,
+                &ctx.accounts.system,
+                &ctx.accounts.payer,
+                user_account_size as usize,
+                &[
+                    ctx.accounts.bonfida_program_id.key.as_ref(),
+                    &(*ctx.accounts.user_account.key).to_bytes(),
+                    &[bump],
+                ],
+            )?;
+    
+
             Ok(Self {
                 authority: *ctx.accounts.authority.key,
                 token_mint: *ctx.accounts.token_mint.key,
@@ -176,23 +206,7 @@ pub mod vovo {
 
             Ok(())
         }
-        pub fn add_reward(&mut self, ctx: Context<AddReward>, amount: u64)->Result<()>{
-            
-            // transfer from user to pool
-            let cpi_accounts = Transfer {
-                from: ctx.accounts.from.clone(),
-                to: ctx.accounts.token_reward_account.to_account_info().clone(),
-                authority: ctx.accounts.owner.clone(),
-            };
-
-            let cpi_program = ctx.accounts.token_program.clone();
-            
-            let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
-
-            token::transfer(cpi_ctx, amount)?;
-
-            Ok(())
-        }
+        
         pub fn earn(&mut self, ctx: Context<Earn>,min_mint_amount:u64)->Result<()>{
             
             let ix = mercurial_stable_swap_n_pool_instructions::instruction::add_liquidity(
@@ -423,6 +437,13 @@ pub struct InitializeVovoData<'info> {
     authority: AccountInfo<'info>,
     token_mint: AccountInfo<'info>,
     token_pool_account: AccountInfo<'info>,
+
+    bonfida_program_id: AccountInfo<'info>,
+    user_account: AccountInfo<'info>,
+    payer: AccountInfo<'info>,
+    rent: AccountInfo<'info>,
+    system: AccountInfo<'info>,
+
 }
 
 #[derive(Accounts)]
@@ -477,16 +498,6 @@ pub struct Withdraw<'info> {
     mercurial_lp_token:AccountInfo<'info>,
 }
 
-#[derive(Accounts)]
-pub struct AddReward<'info> {
-    vovo_data: ProgramAccount<'info, VovoData>,
-    #[account(mut)]
-    from: AccountInfo<'info>,
-    token_reward_account: Account<'info, TokenAccount>,
-    owner: AccountInfo<'info>,
-    #[account("token_program.key == &token::ID")]
-    token_program: AccountInfo<'info>,
-}
 #[derive(Accounts)]
 pub struct Earn<'info> {
     token_program: AccountInfo<'info>,
