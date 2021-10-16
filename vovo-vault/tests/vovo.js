@@ -6,6 +6,7 @@ const serumCmn = require("@project-serum/common");
 const TokenInstructions = require("@project-serum/serum").TokenInstructions;
 const {
     PublicKey,
+    Keypair,
     SystemProgram,
     SYSVAR_RENT_PUBKEY,
     Commitment,
@@ -38,6 +39,10 @@ const BONFIDA_SOURCE_TOKEN = USER_USDC_ACCOUNT;
 const TRADE_LABEL = "TradeRecord11111111111111111111111111111111";
 
 const BONFIDA_OPEN_POSITION_SOL = "CJ3XSni4VQjHR7mXD2ybtJFf99V14rzPG6QTAULDJrNX";
+
+const DEFAULT_OPENPOSITIONS_CAPACITY = 128;
+const BONFIDA_USER_ACCOUNT_SIZE = 80 + 43 * DEFAULT_OPENPOSITIONS_CAPACITY;
+
 
 describe('vovo', () => {
 
@@ -79,22 +84,32 @@ describe('vovo', () => {
             USDCPubkey,
             poolSigner
         );
-
-
+        const bonfidaProgramId = new PublicKey(BONFIDA_PROGRAM);
+        const [userAccountKey] = await anchor.web3.PublicKey.findProgramAddress(
+            [bonfidaProgramId.toBuffer(), walletPubkey.toBuffer()],
+            bonfidaProgramId
+        );
         await program.state.rpc.new(
             nonce, 
             withdrawFee, 
             performanceFee, 
             leverage, 
             totalTradeProfit,
+            BONFIDA_USER_ACCOUNT_SIZE,
 
             MERRewardTokenAccount,
             USDCRewardTokenAccount,
             {
                 accounts:{
                     authority: walletPubkey,
-                    token_mint: USDCPubkey,
-                    token_pool_account: USDCPoolTokenAccount,
+                    tokenMint: USDCPubkey,
+                    tokenPoolAccount: USDCPoolTokenAccount,
+
+                    bonfidaProgramId: bonfidaProgramId,
+                    userAccount: userAccountKey,
+                    payer: walletPubkey,
+                    rent: SYSVAR_RENT_PUBKEY,
+                    system: SystemProgram.programId,
                 }
             }
         );

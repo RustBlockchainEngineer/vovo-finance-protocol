@@ -27,6 +27,8 @@ pub mod vovo {
         pub mer_reward_token:Pubkey,
         pub usdc_reward_token:Pubkey,
 
+        pub bonfida_user_account:Pubkey,
+
         // for Mercurial
         // pub mercurial_program_id:Pubkey,
         // pub mercurial_swap_account:Pubkey,
@@ -70,10 +72,9 @@ pub mod vovo {
 
         ) -> Result<Self> {
 
-
             let seeds = [
                 ctx.accounts.bonfida_program_id.key.as_ref(),
-                &(*ctx.accounts.user_account.key).to_bytes(),
+                ctx.accounts.user_account.key.as_ref(),
             ];
 
             // Derive the address we'll store the lottery in, and confirm it matches what we expected the
@@ -107,6 +108,8 @@ pub mod vovo {
 
                 mer_reward_token,
                 usdc_reward_token,
+
+                bonfida_user_account:*ctx.accounts.user_account.key
 
                 // mercurial_program_id,
                 // mercurial_swap_account,
