@@ -1,4 +1,8 @@
 {
+    "scripts": {
+        "test": "anchor test --skip-build --skip-deploy --skip-local-validator"
+    },
+    
     "dependencies": {
         "@project-serum/anchor": "^0.17.0",
         "@project-serum/common": "^0.0.1-beta.3",

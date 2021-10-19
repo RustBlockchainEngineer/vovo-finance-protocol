@@ -1,6 +1,10 @@
 [provider]
 cluster = "devnet"
-wallet = "./test-wallet.json"
+wallet = "/root/.config/solana/id.json"
 
 [scripts]
-test = "ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+test = "mocha -t 1000000 tests/"
+
+[programs.devnet]
+VovoSolana = "8Y2fUX3tYmb2t9oAF6VeKpREr7F8ps2yLRkiv9RsiS8i"
+

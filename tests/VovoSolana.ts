@@ -54,7 +54,7 @@ describe('VovoSolana', () => {
         const program = anchor.workspace.VovoSolana;
         const tx = await program.rpc.initialize();
         console.log("Your transaction signature", tx);
-        return;
+        return true;
 
         const provider = program.provider;
 
