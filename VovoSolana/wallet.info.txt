@@ -1,0 +1,23 @@
+User wallet Info:
+solana config set -k ./test-keypair.json
+=====================================================================
+pubkey: EscNSusYYGAn69AZGjy8BpA4e9MXtvLeRCHJ3LK3b6vo
+=====================================================================
+Save this seed phrase and your BIP39 passphrase to recover your new keypair:
+bus salute base shock forum smart erupt quantum maze stem quantum oak
+=====================================================================
+
+
+devnet USDC mint address:
+F2sTkVdLXGpRcBDi6Jg2UxKpAXtEPmbZQQMEJo9MXaGw
+supply:500000000, decimals:6
+
+user wallet's USDC account:
+GtDXsNLWLkEbNSKSBrtF9v9UgVTMMAWgnk77d39rU54a
+
+devnet MER mint address:
+Ch4aKo9mBBuXAUqrkkTpLnopZGJmoMmEV43pQmqqKxrM
+supply:500000000, decimals:6
+
+user wallet's MER account:
+E9domVp374m2Cn86WkDoJipAmRJhST3TJ4yem5L8rvoP

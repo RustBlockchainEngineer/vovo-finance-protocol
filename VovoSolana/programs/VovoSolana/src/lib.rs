@@ -13,7 +13,7 @@ use utils::*;
 pub mod vovo {
     use super::*;
 
-    #[account]
+    #[state]
     pub struct VovoData {
         pub authority: Pubkey,
         pub nonce: u8,
@@ -81,21 +81,20 @@ pub mod vovo {
             // user to provide.
             let (_authority, bump) = Pubkey::find_program_address(&seeds, ctx.accounts.bonfida_program_id.key);
 
-            create_or_allocate_account_raw(
-                *ctx.accounts.bonfida_program_id.key,
-                &ctx.accounts.user_account,
-                &ctx.accounts.rent,
-                &ctx.accounts.system,
-                &ctx.accounts.payer,
-                user_account_size as usize,
-                &[
-                    ctx.accounts.bonfida_program_id.key.as_ref(),
-                    &(*ctx.accounts.user_account.key).to_bytes(),
-                    &[bump],
-                ],
-            )?;
+            // create_or_allocate_account_raw(
+            //     *ctx.accounts.bonfida_program_id.key,
+            //     &ctx.accounts.user_account,
+            //     &ctx.accounts.rent,
+            //     &ctx.accounts.system,
+            //     &ctx.accounts.payer,
+            //     user_account_size as usize,
+            //     &[
+            //         ctx.accounts.bonfida_program_id.key.as_ref(),
+            //         &(*ctx.accounts.user_account.key).to_bytes(),
+            //         &[bump],
+            //     ],
+            // )?;
     
-
             Ok(Self {
                 authority: *ctx.accounts.authority.key,
                 token_mint: *ctx.accounts.token_mint.key,
@@ -442,6 +441,7 @@ pub struct InitializeVovoData<'info> {
     token_pool_account: AccountInfo<'info>,
 
     bonfida_program_id: AccountInfo<'info>,
+    #[account(mut)]
     user_account: AccountInfo<'info>,
     payer: AccountInfo<'info>,
     rent: AccountInfo<'info>,
