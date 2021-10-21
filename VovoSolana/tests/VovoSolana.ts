@@ -39,7 +39,7 @@ const TRADE_LABEL = "TradeRecord11111111111111111111111111111111";
 
 const BONFIDA_OPEN_POSITION_SOL = "CJ3XSni4VQjHR7mXD2ybtJFf99V14rzPG6QTAULDJrNX";
 
-const DEFAULT_OPENPOSITIONS_CAPACITY = 128;
+const DEFAULT_OPENPOSITIONS_CAPACITY = 3;
 const BONFIDA_USER_ACCOUNT_SIZE = 80 + 43 * DEFAULT_OPENPOSITIONS_CAPACITY;
 
 describe('VovoSolana', () => {
@@ -48,14 +48,17 @@ describe('VovoSolana', () => {
     // Configure the client to use the local cluster.
     anchor.setProvider(anchor.Provider.env());
 
-    const walletPubkey = new PublicKey(USER_WALLET);
+    
 
     it('Is initialized!', async () => {
         // Add your test here.
         const program = anchor.workspace.Vovo;
         const provider = program.provider;
+        
+        const wallet = provider.wallet.payer;
+        const walletPubkey = wallet.publicKey;
 
-        const [poolSigner,nonce] = await anchor.web3.PublicKey.findProgramAddress(
+        const [programAuthority,nonce] = await anchor.web3.PublicKey.findProgramAddress(
             [program.programId.toBuffer()],
             program.programId
         );
@@ -70,24 +73,43 @@ describe('VovoSolana', () => {
         const MERRewardTokenAccount = await serumCmn.createTokenAccount(
             provider,
             MERPubkey,
-            poolSigner
+            programAuthority
         );
         const USDCRewardTokenAccount = await serumCmn.createTokenAccount(
             provider,
             USDCPubkey,
-            poolSigner
+            programAuthority
         );
         const USDCPoolTokenAccount = await serumCmn.createTokenAccount(
             provider,
             USDCPubkey,
-            poolSigner
+            programAuthority
         );
         
         const bonfidaProgramId = new PublicKey(BONFIDA_PROGRAM);
-        const [userAccountKey] = await anchor.web3.PublicKey.findProgramAddress(
-            [bonfidaProgramId.toBuffer(), walletPubkey.toBuffer()],
-            bonfidaProgramId
+        const bonfidaUserAccount = new Keypair();
+
+        let balance = await provider.connection.getMinimumBalanceForRentExemption(BONFIDA_USER_ACCOUNT_SIZE);
+
+        const tx = new Transaction();
+        const signers:Keypair[] = [];
+        tx.feePayer = walletPubkey;
+        tx.add(
+            SystemProgram.createAccount({
+                fromPubkey: walletPubkey,
+                newAccountPubkey: bonfidaUserAccount.publicKey,
+                lamports: balance,
+                space: BONFIDA_USER_ACCOUNT_SIZE,
+                programId: bonfidaProgramId,
+            })
         );
+        signers.push(wallet);
+        signers.push(bonfidaUserAccount);
+        const txResult = await provider.connection.sendTransaction(tx, signers, {
+            preflightCommitment: "single",
+        });
+        console.log("creating user account", txResult);
+
         await program.state.rpc.new(
             nonce, 
             withdrawFee, 
@@ -103,12 +125,8 @@ describe('VovoSolana', () => {
                     authority: walletPubkey,
                     tokenMint: USDCPubkey,
                     tokenPoolAccount: USDCPoolTokenAccount,
-
                     bonfidaProgramId: bonfidaProgramId,
-                    userAccount: userAccountKey,
-                    payer: walletPubkey,
-                    rent: SYSVAR_RENT_PUBKEY,
-                    system: SystemProgram.programId,
+                    bonfidaUserAccount: bonfidaUserAccount.publicKey,
                 }
             }
         );
@@ -294,7 +312,7 @@ describe('VovoSolana', () => {
                 userInfo: userInfoAccount,
                 to:userUSDCPubkey,
                 tokenPoolAccount:USDCPoolTokenAccount,
-                poolSigner:poolSigner,
+                programAuthority:programAuthority,
                 owner: walletPubkey,
                 tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
 
@@ -302,7 +320,7 @@ describe('VovoSolana', () => {
                 mercurialSwapAccount ,
                 mercurialTokenProgramId ,
                 mercurialPoolAuthority ,
-                mercurial_transfer_authority:poolSigner,
+                mercurial_transfer_authority:programAuthority,
                 mercurialSwapToken,
                 mercurialPoolTokenMint,
                 mercurialLpToken

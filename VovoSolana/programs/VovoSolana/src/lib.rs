@@ -72,29 +72,6 @@ pub mod vovo {
 
         ) -> Result<Self> {
 
-            let seeds = [
-                ctx.accounts.bonfida_program_id.key.as_ref(),
-                ctx.accounts.user_account.key.as_ref(),
-            ];
-
-            // Derive the address we'll store the lottery in, and confirm it matches what we expected the
-            // user to provide.
-            let (_authority, bump) = Pubkey::find_program_address(&seeds, ctx.accounts.bonfida_program_id.key);
-
-            // create_or_allocate_account_raw(
-            //     *ctx.accounts.bonfida_program_id.key,
-            //     &ctx.accounts.user_account,
-            //     &ctx.accounts.rent,
-            //     &ctx.accounts.system,
-            //     &ctx.accounts.payer,
-            //     user_account_size as usize,
-            //     &[
-            //         ctx.accounts.bonfida_program_id.key.as_ref(),
-            //         &(*ctx.accounts.user_account.key).to_bytes(),
-            //         &[bump],
-            //     ],
-            // )?;
-    
             Ok(Self {
                 authority: *ctx.accounts.authority.key,
                 token_mint: *ctx.accounts.token_mint.key,
@@ -108,7 +85,7 @@ pub mod vovo {
                 mer_reward_token,
                 usdc_reward_token,
 
-                bonfida_user_account:*ctx.accounts.user_account.key
+                bonfida_user_account:*ctx.accounts.bonfida_user_account.key
 
                 // mercurial_program_id,
                 // mercurial_swap_account,
@@ -441,11 +418,7 @@ pub struct InitializeVovoData<'info> {
     token_pool_account: AccountInfo<'info>,
 
     bonfida_program_id: AccountInfo<'info>,
-    #[account(mut)]
-    user_account: AccountInfo<'info>,
-    payer: AccountInfo<'info>,
-    rent: AccountInfo<'info>,
-    system: AccountInfo<'info>,
+    bonfida_user_account: AccountInfo<'info>,
 
 }
 
