@@ -110,27 +110,44 @@ describe('VovoSolana', () => {
         });
         console.log("creating user account", txResult);
 
-        await program.state.rpc.new(
-            nonce, 
-            withdrawFee, 
-            performanceFee, 
-            leverage, 
-            totalTradeProfit,
-            new anchor.BN(BONFIDA_USER_ACCOUNT_SIZE), 
-
-            MERRewardTokenAccount,
-            USDCRewardTokenAccount,
-            {
-                accounts:{
-                    authority: walletPubkey,
-                    tokenMint: USDCPubkey,
-                    tokenPoolAccount: USDCPoolTokenAccount,
-                    bonfidaProgramId: bonfidaProgramId,
-                    bonfidaUserAccount: bonfidaUserAccount.publicKey,
+        try{
+            await program.state.rpc.new(
+                nonce, 
+                withdrawFee, 
+                performanceFee, 
+                leverage, 
+                totalTradeProfit,
+                new anchor.BN(BONFIDA_USER_ACCOUNT_SIZE), 
+    
+                MERRewardTokenAccount,
+                USDCRewardTokenAccount,
+                {
+                    accounts:{
+                        authority: walletPubkey,
+                        tokenMint: USDCPubkey,
+                        tokenPoolAccount: USDCPoolTokenAccount,
+                        bonfidaProgramId: bonfidaProgramId,
+                        bonfidaUserAccount: bonfidaUserAccount.publicKey,
+                    }
                 }
-            }
-        );
-        return true;
+            );
+        }
+        catch(e){
+            const alreadyInUse = e.logs && e.logs[2] && e.logs[2].includes("already in use");
+            assert.ok(alreadyInUse);
+            alreadyInUse ? console.log("program state already created!"):console.log("creating program state error!");
+        }
+    });
+
+    it('deposit', async () => {
+        // Add your test here.
+        const program = anchor.workspace.Vovo;
+        const provider = program.provider;
+        
+        const wallet = provider.wallet.payer;
+        const walletPubkey = wallet.publicKey;
+
+        
         const [userInfoAccount, userBump] = await PublicKey.findProgramAddress(
             [
                 Buffer.from(anchor.utils.bytes.utf8.encode("vovo-user-seed")),
@@ -152,6 +169,8 @@ describe('VovoSolana', () => {
                 }
             });
         }
+
+        return;
 
         // step1 -  user deposits some USDC to pool
         await program.state.rpc.deposit(new anchor.BN(10 * 1000000), {
