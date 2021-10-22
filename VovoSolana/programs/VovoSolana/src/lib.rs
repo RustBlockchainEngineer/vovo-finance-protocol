@@ -424,16 +424,16 @@ pub struct InitializeVovoData<'info> {
 
 #[derive(Accounts)]
 pub struct Deposit<'info> {
-    vovo_data: ProgramAccount<'info, VovoData>,
     #[account(mut)]
     user_info: ProgramAccount<'info, UserInfo>,
     #[account(mut)]
     from: AccountInfo<'info>,
+    #[account(mut)]
     token_pool_account: Account<'info, TokenAccount>,
+    #[account(signer)]
     owner: AccountInfo<'info>,
     #[account("token_program.key == &token::ID")]
     token_program: AccountInfo<'info>,
-    rent: AccountInfo<'info>,
 }
 
 

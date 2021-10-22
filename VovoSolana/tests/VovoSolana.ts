@@ -18,7 +18,7 @@ const DEVNET_MODE = true;
 
 const USER_WALLET = "EscNSusYYGAn69AZGjy8BpA4e9MXtvLeRCHJ3LK3b6vo";
 const USER_MER_ACCOUNT = "E9domVp374m2Cn86WkDoJipAmRJhST3TJ4yem5L8rvoP";
-const USER_USDC_ACCOUNT = "AdH5QunFC1x17zo4kF7R2wd1UAXsFo86TB2z9ZhUknCz";
+const USER_USDC_ACCOUNT = "GtDXsNLWLkEbNSKSBrtF9v9UgVTMMAWgnk77d39rU54a";
 const USER_MERCURIAL_LP_ACCOUNT = "5ne6EjcisdUwb8RE8WstP6pvKJGcPb9oCVDuR1XSwPBy";
 
 const USDC_MINT_ADDRESS = DEVNET_MODE?"F2sTkVdLXGpRcBDi6Jg2UxKpAXtEPmbZQQMEJo9MXaGw":"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
@@ -146,7 +146,6 @@ describe('VovoSolana', () => {
         
         const wallet = provider.wallet.payer;
         const walletPubkey = wallet.publicKey;
-
         
         const [userInfoAccount, userBump] = await PublicKey.findProgramAddress(
             [
@@ -157,8 +156,12 @@ describe('VovoSolana', () => {
         );
         const userMERPubkey = new PublicKey(USER_MER_ACCOUNT);
         const userUSDCPubkey = new PublicKey(USER_USDC_ACCOUNT);
-
-        let userInfo = await program.account.userInfo.fetch(userInfoAccount);
+        let userInfo = null;
+        try{
+            userInfo = await program.account.userInfo.fetch(userInfoAccount);
+        }
+        catch(e){
+        }
         if(!userInfo){
             await program.rpc.createUser(userBump, {
                 accounts:{
@@ -170,20 +173,20 @@ describe('VovoSolana', () => {
             });
         }
 
-        return;
-
+        
+        const programState = await program.state.fetch();
         // step1 -  user deposits some USDC to pool
         await program.state.rpc.deposit(new anchor.BN(10 * 1000000), {
             accounts: {
-                vovoData: program.state.address(),
                 userInfo: userInfoAccount,
                 from:userUSDCPubkey,
-                tokenPoolAccount:USDCPoolTokenAccount,
+                tokenPoolAccount:programState.tokenPool,
                 owner: walletPubkey,
                 tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
-                rent: anchor.web3.SYSVAR_RENT_PUBKEY,
             }
         });
+        return;
+        
 
         // step2 - no need
         // await program.state.rpc.addReward(new anchor.BN(5 * 1000000), {
