@@ -12,9 +12,12 @@ import {
     Commitment,
     Transaction
 } from "@solana/web3.js";
-import {SwapState} from "./mercurial_state";
+import { newAccountWithLamports, TestSender } from './helpers';
+import { StableSwapNPool } from './mercurial';
 
 const DEVNET_MODE = true;
+const TOKEN_MINT_DECIMALS = 6;
+const MERCURIAL_POOL_ACCOUNT = Keypair.generate()
 
 const USER_WALLET = "EscNSusYYGAn69AZGjy8BpA4e9MXtvLeRCHJ3LK3b6vo";
 const USER_MER_ACCOUNT = "E9domVp374m2Cn86WkDoJipAmRJhST3TJ4yem5L8rvoP";
@@ -44,19 +47,17 @@ const BONFIDA_USER_ACCOUNT_SIZE = 80 + 43 * DEFAULT_OPENPOSITIONS_CAPACITY;
 
 describe('VovoSolana', () => {
 
+    return;
     // At first , Prepare USDC, MER token accounts and amount in your wallet
     // Configure the client to use the local cluster.
     anchor.setProvider(anchor.Provider.env());
-
+    const program = anchor.workspace.Vovo;
+    const provider = program.provider;
     
+    const wallet = provider.wallet.payer;
+    const walletPubkey = wallet.publicKey;
 
     it('Is initialized!', async () => {
-        // Add your test here.
-        const program = anchor.workspace.Vovo;
-        const provider = program.provider;
-        
-        const wallet = provider.wallet.payer;
-        const walletPubkey = wallet.publicKey;
 
         const [programAuthority,nonce] = await anchor.web3.PublicKey.findProgramAddress(
             [program.programId.toBuffer()],
@@ -141,11 +142,7 @@ describe('VovoSolana', () => {
 
     it('deposit', async () => {
         // Add your test here.
-        const program = anchor.workspace.Vovo;
-        const provider = program.provider;
         
-        const wallet = provider.wallet.payer;
-        const walletPubkey = wallet.publicKey;
         
         const [userInfoAccount, userBump] = await PublicKey.findProgramAddress(
             [
@@ -185,8 +182,10 @@ describe('VovoSolana', () => {
                 tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
             }
         });
-        return;
         
+    });
+    
+    it('earn', async () => {
 
         // step2 - no need
         // await program.state.rpc.addReward(new anchor.BN(5 * 1000000), {
@@ -199,27 +198,22 @@ describe('VovoSolana', () => {
         //     }
         // });
 
+        const programState = await program.state.fetch();
+        
+        const {poolLpToken} = await createMerurialSwapAccount(provider.connection, wallet);
+
         const mercurialProgram = new PublicKey(MERCURIAL_PROGRAM);
-        const mercurialSwapAccount = new PublicKey(MERCURIAL_SWAP_ACCOUNT);
+        const mercurialSwapAccount = MERCURIAL_POOL_ACCOUNT.publicKey;
         const mercurialTokenProgramId = TokenInstructions.TOKEN_PROGRAM_ID;
+
         const [mercurialPoolAuthority, _mercurial_nonce] = await PublicKey.findProgramAddress(
             [mercurialSwapAccount.toBuffer()],
             mercurialProgram
           )
         const mercurialTransferAuthority = walletPubkey;
-        const mercurialSwapToken = userUSDCPubkey;
-
-        
-        // const data = await loadAccount(provider, mercurialSwapAccount, mercurialProgram);
-        // const swapState = SwapState.decode(data)
-        // if (!swapState.isInitialized) {
-        //     console.log(`Invalid mercurial swap state`)
-        // }
-        
-        // const mercurialPoolToken_mint = swapState.poolMint;
-        const mercurialPoolTokenMint = new PublicKey(MERCURIAL_LP_MINT);
-        const tokenPool = USDCPoolTokenAccount;
-        const mercurialLpToken = new PublicKey(USER_MERCURIAL_LP_ACCOUNT);
+        const mercurialSwapToken = new PublicKey(USER_USDC_ACCOUNT);
+        const tokenPool = programState.tokenPool;
+        const mercurialLpToken = (await poolLpToken.getOrCreateAssociatedAccountInfo(walletPubkey)).address;
 
         // step3
         await program.state.rpc.earn(new anchor.BN(1 * 1000000), {
@@ -233,7 +227,7 @@ describe('VovoSolana', () => {
                 mercurialPoolAuthority ,
                 mercurialTransferAuthority,
                 mercurialSwapToken,
-                mercurialPoolTokenMint,
+                poolLpMint:poolLpToken.publicKey,
                 tokenPool,
                 mercurialLpToken
             }
@@ -353,18 +347,60 @@ describe('VovoSolana', () => {
     
 });
 
+export async function createMerurialSwapAccount(connection:anchor.web3.Connection, wallet:any) {
+    const payer = await newAccountWithLamports(connection, 1000000000)
 
+    const tokenA = new Token(connection,new PublicKey(USDC_MINT_ADDRESS), new PublicKey(MERCURIAL_PROGRAM), wallet);
+    
+    const tokenB = new Token(connection,new PublicKey(MER_MINT_ADDRESS), new PublicKey(MERCURIAL_PROGRAM), wallet);
 
-async function loadAccount(provider, address, programId){
-    const accountInfo = await provider.connection.getAccountInfo(address)
-    if (accountInfo === null) {
-      throw new Error('Failed to find account')
-    }
-  
-    if (!accountInfo.owner.equals(programId)) {
-      throw new Error(`Invalid owner: ${JSON.stringify(accountInfo.owner)}`)
-    }
-  
-    return Buffer.from(accountInfo.data)
+    const tokenC = await Token.createMint(
+      connection,
+      payer,
+      payer.publicKey,
+      payer.publicKey,
+      TOKEN_MINT_DECIMALS,
+      TOKEN_PROGRAM_ID
+    )
+
+    const [authority, nonce] = await PublicKey.findProgramAddress(
+      [MERCURIAL_POOL_ACCOUNT.publicKey.toBuffer()],
+      new PublicKey(MERCURIAL_PROGRAM)
+    )
+
+    const amplificationCoefficient = 2000
+    const feeNumerator = 4000000
+    const adminFeeNumerator = 0
+
+    const tokenAccountA = await tokenA.createAccount(authority)
+    const tokenAccountB = await tokenB.createAccount(authority)
+    const tokenAccountC = await tokenC.createAccount(authority)
+    const tokenAccounts = [tokenAccountA, tokenAccountB, tokenAccountC]
+
+    const poolLpToken = await Token.createMint(connection, payer, authority, null, 6, TOKEN_PROGRAM_ID)
+
+    const adminToken = await Token.createMint(connection, payer, payer.publicKey, null, 0, TOKEN_PROGRAM_ID)
+
+    const stableSwapNPool = await StableSwapNPool.create(
+      connection,
+      new TestSender(payer),
+      MERCURIAL_POOL_ACCOUNT,
+      authority,
+      tokenAccounts,
+      poolLpToken.publicKey,
+      adminToken.publicKey,
+      nonce,
+      amplificationCoefficient,
+      feeNumerator,
+      adminFeeNumerator,
+      true,
+      payer,
+      new PublicKey(USER_WALLET)
+    )
+
+    const tokens = [tokenA, tokenB, tokenC]
+
+    assert(MERCURIAL_POOL_ACCOUNT.publicKey.equals(stableSwapNPool.poolAccount))
+
+    return {poolLpToken: poolLpToken}
   }
-  

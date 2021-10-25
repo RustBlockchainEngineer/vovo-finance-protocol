@@ -477,16 +477,21 @@ pub struct Withdraw<'info> {
 #[derive(Accounts)]
 pub struct Earn<'info> {
     token_program: AccountInfo<'info>,
+    #[account(mut)]
     vovo_data: ProgramAccount<'info, VovoData>,
 
     mercurial_program:AccountInfo<'info>,
+    #[account(mut)]
     mercurial_swap_account:AccountInfo<'info>,
     mercurial_token_program_id:AccountInfo<'info>,
     mercurial_pool_authority:AccountInfo<'info>,
     mercurial_transfer_authority:AccountInfo<'info>,
+    #[account(mut)]
     mercurial_swap_token:AccountInfo<'info>,
     mercurial_pool_token_mint:AccountInfo<'info>,
+    #[account(mut)]
     token_pool:Account<'info, TokenAccount>,
+    #[account(mut)]
     mercurial_lp_token:AccountInfo<'info>,
 }
 #[derive(Accounts)]
