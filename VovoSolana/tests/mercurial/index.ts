@@ -211,9 +211,9 @@ export class StableSwapNPool {
     ])
 
     const txid = await sender.send(this.connection, instructions, [ephemeralKeypair])
-
+    
     const result = findLogAndParse<GetMintAmount>(
-      (await this.connection.getTransaction(txid))?.meta?.logMessages || [],
+      (await this.connection.getTransaction(txid))!.meta!.logMessages || [],
       'GetMintAmount'
     )
 
@@ -255,7 +255,7 @@ export class StableSwapNPool {
     const txid = await sender.send(this.connection, instructions, [ephemeralKeypair])
 
     const result = findLogAndParse<GetWithdrawalAmounts>(
-      (await this.connection.getTransaction(txid))?.meta?.logMessages || [],
+      (await this.connection.getTransaction(txid))!.meta!.logMessages || [],
       'GetWithdrawalAmounts'
     )
 
@@ -297,7 +297,7 @@ export class StableSwapNPool {
     const txid = await sender.send(this.connection, instructions, [ephemeralKeypair])
 
     const result = findLogAndParse<GetWithdrawalAmount>(
-      (await this.connection.getTransaction(txid))?.meta?.logMessages || [],
+      (await this.connection.getTransaction(txid))!.meta!.logMessages || [],
       'GetWithdrawalAmount'
     )
 
@@ -340,7 +340,7 @@ export class StableSwapNPool {
     const txid = await sender.send(this.connection, instructions.concat(cleanupInstructions), [ephemeralKeypair])
 
     const result = findLogAndParse<GetDyUnderlying>(
-      (await this.connection.getTransaction(txid))?.meta?.logMessages || [],
+      (await this.connection.getTransaction(txid))!.meta!.logMessages || [],
       'GetDyUnderlying'
     )
 
@@ -386,7 +386,7 @@ export class StableSwapNPool {
     const { value } = await this.connection.simulateTransaction(
       new Transaction({ feePayer: this.simulationUser }).add(...instructions)
     )
-    return findLogAndParse<GetDyUnderlying>(value?.logs, 'GetDyUnderlying').dy
+    return findLogAndParse<GetDyUnderlying>(value!.logs, 'GetDyUnderlying').dy
   }
 
   async getMintAmount(depositAmounts: number[]) {
@@ -407,7 +407,7 @@ export class StableSwapNPool {
     const { value } = await this.connection.simulateTransaction(
       new Transaction({ feePayer: this.simulationUser }).add(...instructions)
     )
-    return findLogAndParse<GetMintAmount>(value?.logs, 'GetMintAmount').mintAmount
+    return findLogAndParse<GetMintAmount>(value!.logs, 'GetMintAmount').mintAmount
   }
 
   async getWithdrawalAmounts(unmintAmount: number): Promise<GetWithdrawalAmounts> {
@@ -428,7 +428,7 @@ export class StableSwapNPool {
     const { value } = await this.connection.simulateTransaction(
       new Transaction({ feePayer: this.simulationUser }).add(...instructions)
     )
-    const result = findLogAndParse<GetWithdrawalAmounts>(value?.logs, 'GetWithdrawalAmounts')
+    const result = findLogAndParse<GetWithdrawalAmounts>(value!.logs, 'GetWithdrawalAmounts')
     return result
   }
 
@@ -454,7 +454,7 @@ export class StableSwapNPool {
     const { value } = await this.connection.simulateTransaction(
       new Transaction({ feePayer: this.simulationUser }).add(...instructions)
     )
-    const result = findLogAndParse<GetWithdrawalAmount>(value?.logs, 'GetWithdrawalAmount')
+    const result = findLogAndParse<GetWithdrawalAmount>(value!.logs, 'GetWithdrawalAmount')
     return result
   }
 
@@ -472,7 +472,7 @@ export class StableSwapNPool {
     const { value } = await this.connection.simulateTransaction(
       new Transaction({ feePayer: this.simulationUser }).add(...instructions)
     )
-    const result = findLogAndParse<GetVirtualPrice>(value?.logs, 'GetVirtualPrice')
+    const result = findLogAndParse<GetVirtualPrice>(value!.logs, 'GetVirtualPrice')
     return result
   }
 
@@ -530,7 +530,7 @@ export class StableSwapNPool {
   }
 
   private static async getTokenAccountMint(connection: Connection, publicKey: PublicKey) {
-    const accountInfoData = (await connection.getAccountInfo(publicKey))?.data
+    const accountInfoData = (await connection.getAccountInfo(publicKey))!.data
     if (!accountInfoData) {
       throw new Error(`Missing pool token account ${publicKey.toBase58()}`)
     }
@@ -569,10 +569,10 @@ export function findLogAndParse<T>(logs: string[] | null, name: string): T {
   const re = new RegExp(`${name}: (\\{.+\\})`, 'i')
 
   let result: T | undefined
-  logs?.find((log) => {
+  logs!.find((log) => {
     const match = log.match(re)
-    if (match?.length === 2) {
-      result = JSON.parse(match[1]) as T
+    if (match!.length === 2) {
+      result = JSON.parse(match![1]) as T
     }
 
     return match
