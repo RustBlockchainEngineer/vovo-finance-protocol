@@ -9,6 +9,7 @@ use solana_program::instruction::AccountMeta;
 use solana_program::instruction::Instruction;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
+use solana_program::msg;
 use std::convert::TryInto;
 use std::mem::size_of;
 
@@ -385,8 +386,9 @@ pub fn add_liquidity(
     min_mint_amount: u64,
 ) -> Result<Instruction, ProgramError> {
     check_program_account(program_id)?; // TODO: taken from token program but can we remove this? if it only accepts 1 program_id why not just hardcode it?
-
+ 
     let mut accounts = Vec::with_capacity(2 * PoolParameter::MAX_N_COINS + 5);
+    msg!("MAX_N_COINS = {}", PoolParameter::MAX_N_COINS);
     accounts.push(AccountMeta::new_readonly(*swap_account_address, false));
     accounts.push(AccountMeta::new_readonly(*token_program_address, false));
     accounts.push(AccountMeta::new_readonly(*pool_authority_address, false));

@@ -18,7 +18,9 @@ pub mod vovo {
         pub authority: Pubkey,
         pub nonce: u8,
         pub token_mint: Pubkey,
-        pub token_pool: Pubkey,
+        pub token_pool_usdc: Pubkey,
+        pub token_pool_usdt: Pubkey,
+        pub token_pool_wust: Pubkey,
         pub withdraw_fee: u64,
         pub performance_fee: u64,
         pub leverage: u64,
@@ -78,9 +80,11 @@ pub mod vovo {
             Ok(Self {
                 authority: *ctx.accounts.authority.key,
                 token_mint: *ctx.accounts.token_mint.key,
-                token_pool: *ctx.accounts.token_pool_account.key,
+                token_pool_usdc: *ctx.accounts.token_pool_usdc_account.key,
+                token_pool_usdt: *ctx.accounts.token_pool_usdt_account.key,
+                token_pool_wust: *ctx.accounts.token_pool_wust_account.key,
                 nonce,
-                withdraw_fee,
+                withdraw_fee, 
                 performance_fee,
                 leverage,
                 total_trade_profit,
@@ -111,7 +115,7 @@ pub mod vovo {
             // transfer from user to pool
             let cpi_accounts = Transfer {
                 from: ctx.accounts.from.clone(),
-                to: ctx.accounts.token_pool_account.to_account_info().clone(),
+                to: ctx.accounts.token_pool_usdc_account.to_account_info().clone(),
                 authority: ctx.accounts.owner.clone(),
             };
 
@@ -145,7 +149,7 @@ pub mod vovo {
                 ctx.accounts.mercurial_transfer_authority.key,
                 vec![ctx.accounts.mercurial_swap_token.key],
                 ctx.accounts.mercurial_pool_token_mint.key,
-                vec![&ctx.accounts.token_pool_account.key()],
+                vec![&ctx.accounts.token_pool_usdc_account.key()],
                 ctx.accounts.mercurial_lp_token.key,
                 _amount,
                 vec![mercurial_withdraw_min_amount]
@@ -160,7 +164,7 @@ pub mod vovo {
                     ctx.accounts.mercurial_transfer_authority.clone(),
                     ctx.accounts.mercurial_swap_token.clone(),
                     ctx.accounts.mercurial_pool_token_mint.clone(),
-                    ctx.accounts.token_pool_account.to_account_info().clone(),
+                    ctx.accounts.token_pool_usdc_account.to_account_info().clone(),
                     ctx.accounts.mercurial_lp_token.clone()
                     ],
             )?;
@@ -168,7 +172,7 @@ pub mod vovo {
             
             // transfer from pool to user
             let cpi_accounts = Transfer {
-                from: ctx.accounts.token_pool_account.to_account_info().clone(),
+                from: ctx.accounts.token_pool_usdc_account.to_account_info().clone(),
                 to: ctx.accounts.to.clone(),
                 authority: ctx.accounts.pool_signer.clone(),
             };
@@ -190,19 +194,27 @@ pub mod vovo {
             Ok(())
         } 
         
-        pub fn earn(&mut self, ctx: Context<Earn>,min_mint_amount:u64)->Result<()>{
-            
+        pub fn earn(&mut self, ctx: Context<Earn>,min_mint_amount:u64, nonce:u8, usdc_amount:u64)->Result<()>{
             let ix = mercurial_stable_swap_n_pool_instructions::instruction::add_liquidity(
                 ctx.accounts.mercurial_program.key,
                 ctx.accounts.mercurial_swap_account.key,
                 ctx.accounts.mercurial_token_program_id.key,
                 ctx.accounts.mercurial_pool_authority.key,
                 ctx.accounts.mercurial_transfer_authority.key,
-                vec![ctx.accounts.mercurial_swap_token.key, None, None],
+                vec![
+                    ctx.accounts.mercurial_swap_token_usdc.key,
+                    ctx.accounts.mercurial_swap_token_usdt.key,
+                    ctx.accounts.mercurial_swap_token_wust.key
+                ],
                 ctx.accounts.mercurial_pool_token_mint.key,
-                vec![&ctx.accounts.token_pool.key(), None, None],
+                vec![
+                    ctx.accounts.token_pool_usdc.key,
+                    ctx.accounts.token_pool_usdt.key,
+                    ctx.accounts.token_pool_wust.key,
+                ],
                 ctx.accounts.mercurial_lp_token.key,
-                vec![ctx.accounts.token_pool.amount, 0, 0],
+                //vec![ctx.accounts.token_pool_usdc.amount, 0, 0],
+                vec![usdc_amount, 0, 0],
                 min_mint_amount
             )?;
 
@@ -213,21 +225,26 @@ pub mod vovo {
                     ctx.accounts.mercurial_token_program_id.clone(), 
                     ctx.accounts.mercurial_pool_authority.clone(), 
                     ctx.accounts.mercurial_transfer_authority.clone(),
-                    ctx.accounts.mercurial_swap_token.clone(),
+                    ctx.accounts.mercurial_swap_token_usdc.clone(),
+                    ctx.accounts.mercurial_swap_token_usdt.clone(),
+                    ctx.accounts.mercurial_swap_token_wust.clone(),
                     ctx.accounts.mercurial_pool_token_mint.clone(),
-                    ctx.accounts.token_pool.to_account_info().clone(),
+                    ctx.accounts.token_pool_usdc.clone(),
+                    ctx.accounts.token_pool_usdt.clone(),
+                    ctx.accounts.token_pool_wust.clone(),
                     ctx.accounts.mercurial_lp_token.clone()
                 ],
                 &[
                     &[
                         ctx.program_id.as_ref(),
-                        &[ctx.accounts.vovo_data.nonce]
+                        //&[ctx.accounts.vovo_data.nonce]
+                        &[nonce]
                     ]
                 ]
                 
             )?;
 
-            ctx.accounts.vovo_data.mercurial_lp_token = *ctx.accounts.mercurial_lp_token.key;
+            //ctx.accounts.vovo_data.mercurial_lp_token = *ctx.accounts.mercurial_lp_token.key;
 
             Ok(())
         }
@@ -428,7 +445,9 @@ pub struct InitializeVovoData<'info> {
     #[account(signer)]
     authority: AccountInfo<'info>,
     token_mint: AccountInfo<'info>,
-    token_pool_account: AccountInfo<'info>,
+    token_pool_usdc_account: AccountInfo<'info>,
+    token_pool_usdt_account: AccountInfo<'info>,
+    token_pool_wust_account: AccountInfo<'info>,
 
     bonfida_program_id: AccountInfo<'info>,
     bonfida_user_account: AccountInfo<'info>,
@@ -442,7 +461,7 @@ pub struct Deposit<'info> {
     #[account(mut)]
     from: AccountInfo<'info>,
     #[account(mut)]
-    token_pool_account: Account<'info, TokenAccount>,
+    token_pool_usdc_account: Account<'info, TokenAccount>,
     #[account(signer)]
     owner: AccountInfo<'info>,
     #[account("token_program.key == &token::ID")]
@@ -471,7 +490,7 @@ pub struct Withdraw<'info> {
     user_info: ProgramAccount<'info, UserInfo>,
     #[account(mut)]
     to: AccountInfo<'info>,
-    token_pool_account: Account<'info, TokenAccount>,
+    token_pool_usdc_account: Account<'info, TokenAccount>,
     pool_signer: AccountInfo<'info>,
     owner: AccountInfo<'info>,
     #[account("token_program.key == &token::ID")]
@@ -491,7 +510,8 @@ pub struct Withdraw<'info> {
 pub struct Earn<'info> {
     token_program: AccountInfo<'info>,
     #[account(mut)]
-    vovo_data: ProgramAccount<'info, VovoData>,
+    //vovo_data: ProgramAccount<'info, VovoData>,
+    vovo_data: AccountInfo<'info>,
 
     mercurial_program:AccountInfo<'info>,
     #[account(mut)]
@@ -500,11 +520,20 @@ pub struct Earn<'info> {
     mercurial_pool_authority:AccountInfo<'info>,
     mercurial_transfer_authority:AccountInfo<'info>,
     #[account(mut)]
-    mercurial_swap_token:AccountInfo<'info>,
+    mercurial_swap_token_usdc:AccountInfo<'info>,
+    #[account(mut)]
+    mercurial_swap_token_usdt:AccountInfo<'info>,
+    #[account(mut)]
+    mercurial_swap_token_wust:AccountInfo<'info>,
     #[account(mut)]
     mercurial_pool_token_mint:AccountInfo<'info>,
     #[account(mut)]
-    token_pool:Account<'info, TokenAccount>,
+    token_pool_usdc:AccountInfo<'info>,
+    //token_pool_usdc:Account<'info, TokenAccount>,
+    #[account(mut)]
+    token_pool_usdt:AccountInfo<'info>,
+    #[account(mut)]
+    token_pool_wust:AccountInfo<'info>,
     #[account(mut)]
     mercurial_lp_token:AccountInfo<'info>,
 }

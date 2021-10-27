@@ -212,12 +212,18 @@ export class StableSwapNPool {
 
     const txid = await sender.send(this.connection, instructions, [ephemeralKeypair])
     
-    const result = findLogAndParse<GetMintAmount>(
-      (await this.connection.getTransaction(txid))!.meta!.logMessages || [],
-      'GetMintAmount'
-    )
-
-    return { txid, result }
+    try{
+      const result = findLogAndParse<GetMintAmount>(
+        (await this.connection.getTransaction(txid,{commitment:"confirmed"}))!.meta!.logMessages || [],
+        'GetMintAmount'
+      )
+      return { txid, result }
+  
+    }
+    catch(e){
+      return { txid, result:{mintAmount:0} }
+    }
+    
   }
 
   async removeLiquidity(
