@@ -1,7 +1,7 @@
+
 import * as anchor from '@project-serum/anchor';
 import { TOKEN_PROGRAM_ID, Token } from "@solana/spl-token";
 import  assert from "assert";
-
 import * as serumCmn from "@project-serum/common";
 import {TokenInstructions} from "@project-serum/serum";
 import {
@@ -14,6 +14,7 @@ import {
 } from "@solana/web3.js";
 import { newAccountWithLamports, TestSender } from './helpers';
 import { StableSwapNPool } from './mercurial';
+import {createMarket, addInstance, addBudget} from '@audaces/perps';
 
 const DEVNET_MODE = true;
 const TOKEN_MINT_DECIMALS = 6;
@@ -204,7 +205,7 @@ describe('VovoSolana', () => {
     });
     
     it('earn', async () => {
-
+        return;
         // step2 - no need
         // await program.state.rpc.addReward(new anchor.BN(5 * 1000000), {
         //     accounts: {
@@ -263,8 +264,8 @@ describe('VovoSolana', () => {
                 mercurialLpToken
             }
         });
-        return;
-        /*
+    });
+    it('poke', async () => {
         const minOutAmount = 1;
         const closingCollateral = 1200;
         const closingVCoin = 1;
@@ -274,7 +275,7 @@ describe('VovoSolana', () => {
 
         const side = 0;
         const instanceIndex = 0;
-        const collateral = 120;
+        const collateral = 120; 
         
         const audacesProtocolProgramId = new PublicKey(BONFIDA_PROGRAM);
         const marketAccount = new PublicKey(BONFIDA_MARKET_SOL);
@@ -346,7 +347,8 @@ describe('VovoSolana', () => {
                 tradeLabel,
             }
         });
-
+    });
+    it('withdraw', async () => {
         const amount = new anchor.BN(5 * 1000000);
         const minAmount =new anchor.BN(1 * 1000000);
         //step5
@@ -373,7 +375,6 @@ describe('VovoSolana', () => {
                 mercurialLpToken
             }
         });
-        */
     });
     
 });
