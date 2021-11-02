@@ -1,11 +1,11 @@
-[programs.devnet]
-vovo = "J7wkrUumYVLJdg1k2Dt2DWsMZ6mkzYqhzuqLpiS5hTXX"
+[programs.mainnet]
+vovo = "8tWXcJBkf5pscKgL2sWDTaW2cyyByzxnWxrRTfQ2AxoQ"
 
 [registry]
 url = "https://anchor.projectserum.com"
 
 [provider]
-cluster = "devnet"
+cluster = "mainnet"
 wallet = "./test-keypair.json"
 
 [scripts]

@@ -32,7 +32,7 @@ yarn add @audaces/perps
 The high level bindings (`high_level.ts`) contain higher level bindings that aim at providing an easier way to interact with the on-chain program than the low level bindings (`bindings.ts` and `secondary_bindings.ts`).
 
 ### Managing a position
-
+ 
 #### Creating a user account
 
 Creating a user account for a particular market (`marketAddress`) can be done with `createUserAccount`
