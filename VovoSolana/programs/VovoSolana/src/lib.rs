@@ -6,8 +6,8 @@ use solana_program::{
 };
 use audaces_protocol::state::PositionType;
 
-mod utils;
-use utils::*;
+pub mod utils;
+pub mod amm_instruction;
 
 #[program]
 pub mod vovo {
@@ -397,7 +397,7 @@ pub mod vovo {
             //     ]
             // )?;
 
-            // Ok(()) 
+            Ok(()) 
         }
 
     }
@@ -485,6 +485,7 @@ pub struct Withdraw<'info> {
 
 #[derive(Accounts)]
 pub struct Earn<'info> {
+    #[account("token_program.key == &token::ID")]
     token_program: AccountInfo<'info>,
     #[account(mut)]
     vovo_data: ProgramAccount<'info, VovoData>,
@@ -492,6 +493,7 @@ pub struct Earn<'info> {
     mercurial_program:AccountInfo<'info>,
     #[account(mut)]
     mercurial_swap_account:AccountInfo<'info>,
+    #[account("token_program.key == &token::ID")]
     mercurial_token_program_id:AccountInfo<'info>,
     mercurial_pool_authority:AccountInfo<'info>,
     mercurial_transfer_authority:AccountInfo<'info>,
@@ -514,7 +516,9 @@ pub struct Earn<'info> {
 }
 #[derive(Accounts)]
 pub struct MercurialWithdraw<'info> {
+    #[account("token_program.key == &token::ID")]
     token_program: AccountInfo<'info>,
+    #[account(mut)]
     vovo_data: ProgramAccount<'info, VovoData>,
 
     
@@ -523,44 +527,50 @@ pub struct MercurialWithdraw<'info> {
 
 #[derive(Accounts)]
 pub struct Poke<'info> {
+    #[account("token_program.key == &token::ID")]
     token_program: AccountInfo<'info>,
     #[account(mut)]
     vovo_data: ProgramAccount<'info, VovoData>,
-
-    mercurial_program:AccountInfo<'info>,
-    #[account(mut)]
-    mercurial_swap_account:AccountInfo<'info>,
-    mercurial_token_program_id:AccountInfo<'info>,
-    mercurial_pool_authority:AccountInfo<'info>,
-    mercurial_transfer_authority:AccountInfo<'info>,
-    #[account(mut)]
-    mercurial_swap_token_mer:AccountInfo<'info>,
-    #[account(mut)]
-    mercurial_swap_token_usdc:AccountInfo<'info>,
-    #[account(mut)]
-    mercurial_pool_token_mint:AccountInfo<'info>,
-    mer_reward_token:Account<'info, TokenAccount>,
-    usdc_reward_token:Account<'info, TokenAccount>,
     
-    audaces_protocol_program_id: AccountInfo<'info>,
-    market_account: AccountInfo<'info>,
-    market_signer_account: AccountInfo<'info>,
-    market_vault: Account<'info, TokenAccount>,
-    target_account: AccountInfo<'info>,
-    open_positions_owner_account: AccountInfo<'info>,
-    oracle_account: AccountInfo<'info>,
-    instance_account: AccountInfo<'info>,
-    user_account: AccountInfo<'info>,
-    user_account_owner: AccountInfo<'info>,
-    bonfida_bnb: AccountInfo<'info>,
-    memory_page: AccountInfo<'info>,
+    raydium_program_id: AccountInfo<'info>,
+    raydium_amm_id: AccountInfo<'info>,
+    raydium_amm_authority: AccountInfo<'info>,
+    raydium_amm_open_orders: AccountInfo<'info>,
+    raydium_amm_target_orders: AccountInfo<'info>,
+    raydium_pool_coin_token_account: AccountInfo<'info>,
+    raydium_pool_pc_token_account: AccountInfo<'info>,
+    raydium_serum_program_id: AccountInfo<'info>,
+    raydium_serum_market: AccountInfo<'info>,
+    raydium_serum_bids: AccountInfo<'info>,
+    raydium_serum_asks: AccountInfo<'info>,
+    raydium_serum_event_queue: AccountInfo<'info>,
+    raydium_serum_coin_vault_account: AccountInfo<'info>,
+    raydium_serum_pc_vault_account: AccountInfo<'info>,
+    raydium_serum_vault_signer: AccountInfo<'info>,
 
-    source_owner: AccountInfo<'info>,
-    source_token_account: AccountInfo<'info>,
-    open_positions_account: AccountInfo<'info>,
+    uer_source_token_account: Account<'info, TokenAccount>,
+    uer_destination_token_account: AccountInfo<'info>,
+    user_source_owner: AccountInfo<'info>,
+    
+    // audaces_protocol_program_id: AccountInfo<'info>,
+    // market_account: AccountInfo<'info>,
+    // market_signer_account: AccountInfo<'info>,
+    // market_vault: Account<'info, TokenAccount>,
+    // target_account: AccountInfo<'info>,
+    // open_positions_owner_account: AccountInfo<'info>,
+    // oracle_account: AccountInfo<'info>,
+    // instance_account: AccountInfo<'info>,
+    // user_account: AccountInfo<'info>,
+    // user_account_owner: AccountInfo<'info>,
+    // bonfida_bnb: AccountInfo<'info>,
+    // memory_page: AccountInfo<'info>,
 
-    clock_sysvar: AccountInfo<'info>,
-    trade_label: AccountInfo<'info>,
+    // source_owner: AccountInfo<'info>,
+    // source_token_account: AccountInfo<'info>,
+    // open_positions_account: AccountInfo<'info>,
+
+    // clock_sysvar: AccountInfo<'info>,
+    // trade_label: AccountInfo<'info>,
 }
 #[derive(Accounts)]
 pub struct InitializeUserInfo<'info> {
