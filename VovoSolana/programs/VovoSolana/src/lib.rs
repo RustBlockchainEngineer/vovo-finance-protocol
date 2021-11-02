@@ -253,16 +253,16 @@ pub mod vovo {
             &mut self, 
             ctx: Context<Poke>,
 
-            closing_collateral: u64,
-            closing_v_coin: u64,
-            position_index: u16,
-            predicted_entry_price: u64,
-            maximum_slippage_margin: u64,
+            // closing_collateral: u64,
+            // closing_v_coin: u64,
+            // position_index: u16,
+            // predicted_entry_price: u64,
+            // maximum_slippage_margin: u64,
 
-            side: u8, 
-            instance_index: u8, 
-            collateral: u64, 
-            leverage: u64, 
+            // side: u8, 
+            // instance_index: u8, 
+            // collateral: u64, 
+            // leverage: u64, 
         )->Result<()>{
 
             // raydium swap
@@ -288,12 +288,11 @@ pub mod vovo {
                 ctx.accounts.user_source_token_account.amount,
                 0
             )?;
-                
 
             invoke_signed(
                 &ix,
                 &[
-                    ctx.accounts.raydium_program_id.clone(),
+                    ctx.accounts.token_program.clone(),
                     ctx.accounts.raydium_amm_id.clone(),
                     ctx.accounts.raydium_amm_authority.clone(),
                     ctx.accounts.raydium_amm_open_orders.clone(),

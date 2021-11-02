@@ -252,89 +252,118 @@ describe('VovoSolana', () => {
     // }); 
 
     it('poke', async () => {
-        
-        const minOutAmount = 1;
-        const closingCollateral = 1200;
-        const closingVCoin = 1;
-        const positionIndex = 0;
-        const predictedEntryPrice = 1;
-        const maximumSlippageMargin = 1;
+        const programState = await program.state.fetch();
 
-        const side = 0;
-        const instanceIndex = 0;
-        const collateral = 120; 
-        const leverage = 15;
-        
-        const mercurialProgram = new PublicKey(MERCURIAL_PROGRAM);
-        
-        const audacesProtocolProgramId = new PublicKey(BONFIDA_PROGRAM);
-        const marketAccount = new PublicKey(BONFIDA_MARKET_SOL);
-        const marketSignerAccount = new PublicKey(BONFIDA_MARKET_SIGNER_SOL);
-        const marketVault = new PublicKey(BONFIDA_MARKET_VAULT_SOL);
-        const targetAccount = new PublicKey(BONFIDA_TARGET_SOL);
-        const openPositionsOwnerAccount = walletPubkey;
-        const oracleAccount = new Keypair().publicKey;
-        const instanceAccount = new Keypair().publicKey;
-        const userAccount = new Keypair().publicKey;
-        const userAccountOwner = new Keypair().publicKey;
-        const bonfidaBnb = new Keypair().publicKey;
-        const memoryPage = new Keypair().publicKey;
+        const raydiumProgramId = new PublicKey("675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8")
+        const raydiumAmmId = new PublicKey("BkfGDk676QFtTiGxn7TtEpHayJZRr6LgNk9uTV2MH4bR")
+        const raydiumAmmAuthority = new PublicKey("5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1")
+        const raydiumAmmOpenOrders = new PublicKey("FNwXaqyYNKNwJ8Qc39VGzuGnPcNTCVKExrgUKTLCcSzU")
+        const raydiumAmmTargetOrders = new PublicKey("DKgXbNmsm1uCJ2eyh6xcnTe1G6YUav8RgzaxrbkG4xxe")
+        const raydiumPoolCoinTokenAccount = new PublicKey("6XZ1hoJQZARtyA17mXkfnKSHWK2RvocC3UDNsY7f4Lf6")
+        const raydiumPoolPcTokenAccount = new PublicKey("F4opwQUoVhVRaf3CpMuCPpWNcB9k3AXvMMsfQh52pa66")
+        const raydiumSerumProgramId = new PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
+        const raydiumSerumMarket = new PublicKey("G4LcexdCzzJUKZfqyVDQFzpkjhB1JoCNL8Kooxi9nJz5")
+        const raydiumSerumBids = new PublicKey("DVjhW8nLFWrpRwzaEi1fgJHJ5heMKddssrqE3AsGMCHp")
+        const raydiumSerumAsks = new PublicKey("CY2gjuWxUFGcgeCy3UiureS3kmjgDSRF59AQH6TENtfC")
+        const raydiumSerumEventQueue = new PublicKey("8w4n3fcajhgN8TF74j42ehWvbVJnck5cewpjwhRQpyyc")
+        const raydiumSerumCoinVaultAccount = new PublicKey("4ctYuY4ZvCVRvF22QDw8LzUis9yrnupoLQNXxmZy1BGm")
+        const raydiumSerumPcVaultAccount = new PublicKey("DovDds7NEzFn493DJ2yKBRgqsYgDXg6z38pUGXe1AAWQ")
+        const raydiumSerumVaultSigner = new PublicKey("BUDJ4F1ZknbZiwHb6xHEsH6o1LuW394DE8wKT8CoAYNF")
 
-        const sourceOwner = new PublicKey(BONFIDA_SOURCE_OWNER);
-        const sourceTokenAccount = new PublicKey(BONFIDA_SOURCE_TOKEN);
-        const openPositionsAccount = new PublicKey(BONFIDA_OPEN_POSITION_SOL);
+        const userSourceTokenAccount = programState.merRewardToken
+        const userDestinationTokenAccount = programState.usdcRewardToken
+        const userSourceOwner = programState.authority
+        
+        // const minOutAmount = 1;
+        // const closingCollateral = 1200;
+        // const closingVCoin = 1;
+        // const positionIndex = 0;
+        // const predictedEntryPrice = 1;
+        // const maximumSlippageMargin = 1;
 
-        const clockSysvar = anchor.web3.SYSVAR_CLOCK_PUBKEY;
-        const tradeLabel = new PublicKey(TRADE_LABEL);
+        // const side = 0;
+        // const instanceIndex = 0;
+        // const collateral = 120; 
+        // const leverage = 15;
+        
+        // const mercurialProgram = new PublicKey(MERCURIAL_PROGRAM);
+        
+        // const audacesProtocolProgramId = new PublicKey(BONFIDA_PROGRAM);
+        // const marketAccount = new PublicKey(BONFIDA_MARKET_SOL);
+        // const marketSignerAccount = new PublicKey(BONFIDA_MARKET_SIGNER_SOL);
+        // const marketVault = new PublicKey(BONFIDA_MARKET_VAULT_SOL);
+        // const targetAccount = new PublicKey(BONFIDA_TARGET_SOL);
+        // const openPositionsOwnerAccount = walletPubkey;
+        // const oracleAccount = new Keypair().publicKey;
+        // const instanceAccount = new Keypair().publicKey;
+        // const userAccount = new Keypair().publicKey;
+        // const userAccountOwner = new Keypair().publicKey;
+        // const bonfidaBnb = new Keypair().publicKey;
+        // const memoryPage = new Keypair().publicKey;
+
+        // const sourceOwner = new PublicKey(BONFIDA_SOURCE_OWNER);
+        // const sourceTokenAccount = new PublicKey(BONFIDA_SOURCE_TOKEN);
+        // const openPositionsAccount = new PublicKey(BONFIDA_OPEN_POSITION_SOL);
+
+        // const clockSysvar = anchor.web3.SYSVAR_CLOCK_PUBKEY;
+        // const tradeLabel = new PublicKey(TRADE_LABEL);
         
         //step4
         await program.state.rpc.bonfidaPoke(
-            new anchor.BN(minOutAmount),
-            new anchor.BN(closingCollateral),
-            new anchor.BN(closingVCoin),
-            positionIndex,
-            new anchor.BN(predictedEntryPrice),
-            new anchor.BN(maximumSlippageMargin),
-            side,
-            instanceIndex,
-            new anchor.BN(collateral),
-            new anchor.BN(leverage),
+            // new anchor.BN(minOutAmount),
+            // new anchor.BN(closingCollateral),
+            // new anchor.BN(closingVCoin),
+            // positionIndex,
+            // new anchor.BN(predictedEntryPrice),
+            // new anchor.BN(maximumSlippageMargin),
+            // side,
+            // instanceIndex,
+            // new anchor.BN(collateral),
+            // new anchor.BN(leverage),
             {
             accounts: {
                 tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
                 vovoData: program.state.address(),
 
-                mercurialProgram,
-                mercurialSwapAccount ,
-                mercurialTokenProgramId ,
-                mercurialPoolAuthority ,
-                mercurialTransferAuthority,
-                mercurialSwapToken,
-                mercurialPoolTokenMint,
-                tokenPool,
-                merRewardToken:MERRewardTokenAccount,
-                usdcRewardToken:USDCRewardTokenAccount,
+                raydiumProgramId,
+                raydiumAmmId,
+                raydiumAmmAuthority,
+                raydiumAmmOpenOrders,
+                raydiumAmmTargetOrders,
+                raydiumPoolCoinTokenAccount,
+                raydiumPoolPcTokenAccount,
+                raydiumSerumProgramId,
+                raydiumSerumMarket,
+                raydiumSerumBids,
+                raydiumSerumAsks,
+                raydiumSerumEventQueue,
+                raydiumSerumCoinVaultAccount,
+                raydiumSerumPcVaultAccount,
+                raydiumSerumVaultSigner,
 
+                userSourceTokenAccount,
+                userDestinationTokenAccount,
+                userSourceOwner,
 
-                audacesProtocolProgramId,
-                marketAccount,
-                marketSignerAccount,
-                marketVault,
-                targetAccount,
-                openPositionsOwnerAccount,
-                oracleAccount,
-                instanceAccount,
-                userAccount,
-                userAccountOwner,
-                bonfidaBnb,
-                memoryPage,
+                // audacesProtocolProgramId,
+                // marketAccount,
+                // marketSignerAccount,
+                // marketVault,
+                // targetAccount,
+                // openPositionsOwnerAccount,
+                // oracleAccount,
+                // instanceAccount,
+                // userAccount,
+                // userAccountOwner,
+                // bonfidaBnb,
+                // memoryPage,
 
-                sourceOwner,
-                sourceTokenAccount,
-                openPositionsAccount,
+                // sourceOwner,
+                // sourceTokenAccount,
+                // openPositionsAccount,
 
-                clockSysvar,
-                tradeLabel,
+                // clockSysvar,
+                // tradeLabel,
             }
         });
     });
