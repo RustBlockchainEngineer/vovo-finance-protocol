@@ -67,6 +67,7 @@ impl AmmInstruction {
                 buf.extend_from_slice(&amount_in.to_le_bytes());
                 buf.extend_from_slice(&minimum_amount_out.to_le_bytes());
             }
+            _ => {}
         }
         Ok(buf)
     }

@@ -195,7 +195,6 @@ pub mod vovo {
         } 
         
         pub fn earn(&mut self, ctx: Context<Earn>,min_mint_amount:u64)->Result<()>{
-            msg!("usdc amount = {}",ctx.accounts.token_pool_usdc.amount);
             let ix = mercurial_stable_swap_n_pool_instructions::instruction::add_liquidity(
                 ctx.accounts.mercurial_program.key,
                 ctx.accounts.mercurial_swap_account.key,
@@ -253,7 +252,6 @@ pub mod vovo {
         pub fn bonfida_poke(
             &mut self, 
             ctx: Context<Poke>,
-            min_out_amount: u64,
 
             closing_collateral: u64,
             closing_v_coin: u64,
@@ -268,8 +266,61 @@ pub mod vovo {
         )->Result<()>{
 
             // raydium swap
-            
+            let ix = amm_instruction::swap(
+                ctx.accounts.raydium_program_id.key, 
+                ctx.accounts.raydium_amm_id.key, 
+                ctx.accounts.raydium_amm_authority.key, 
+                ctx.accounts.raydium_amm_open_orders.key, 
+                ctx.accounts.raydium_amm_target_orders.key, 
+                ctx.accounts.raydium_pool_coin_token_account.key, 
+                ctx.accounts.raydium_pool_pc_token_account.key, 
+                ctx.accounts.raydium_serum_program_id.key, 
+                ctx.accounts.raydium_serum_market.key, 
+                ctx.accounts.raydium_serum_bids.key, 
+                ctx.accounts.raydium_serum_asks.key, 
+                ctx.accounts.raydium_serum_event_queue.key, 
+                ctx.accounts.raydium_serum_coin_vault_account.key, 
+                ctx.accounts.raydium_serum_pc_vault_account.key, 
+                ctx.accounts.raydium_serum_vault_signer.key, 
+                &ctx.accounts.user_source_token_account.key(), 
+                ctx.accounts.user_destination_token_account.key, 
+                ctx.accounts.user_source_owner.key, 
+                ctx.accounts.user_source_token_account.amount,
+                0
+            )?;
+                
 
+            invoke_signed(
+                &ix,
+                &[
+                    ctx.accounts.raydium_program_id.clone(),
+                    ctx.accounts.raydium_amm_id.clone(),
+                    ctx.accounts.raydium_amm_authority.clone(),
+                    ctx.accounts.raydium_amm_open_orders.clone(),
+                    ctx.accounts.raydium_amm_target_orders.clone(),
+                    ctx.accounts.raydium_pool_coin_token_account.clone(),
+                    ctx.accounts.raydium_pool_pc_token_account.clone(),
+                    ctx.accounts.raydium_serum_program_id.clone(),
+                    ctx.accounts.raydium_serum_market.clone(),
+                    ctx.accounts.raydium_serum_bids.clone(),
+                    ctx.accounts.raydium_serum_asks.clone(),
+                    ctx.accounts.raydium_serum_event_queue.clone(),
+                    ctx.accounts.raydium_serum_coin_vault_account.clone(),
+                    ctx.accounts.raydium_serum_pc_vault_account.clone(),
+                    ctx.accounts.raydium_serum_vault_signer.clone(),
+                    ctx.accounts.user_source_token_account.to_account_info().clone(), 
+                    ctx.accounts.user_destination_token_account.clone(),
+                    ctx.accounts.user_source_owner.clone(),
+                ],
+                &[
+                    &[
+                        ctx.program_id.as_ref(),
+                        &[ctx.accounts.vovo_data.nonce]
+                    ]
+                ]
+                
+            )?;
+            
             // // close position
             // let mut ix = audaces_protocol::instruction::cpi::close_position
             // (
@@ -548,8 +599,8 @@ pub struct Poke<'info> {
     raydium_serum_pc_vault_account: AccountInfo<'info>,
     raydium_serum_vault_signer: AccountInfo<'info>,
 
-    uer_source_token_account: Account<'info, TokenAccount>,
-    uer_destination_token_account: AccountInfo<'info>,
+    user_source_token_account: Account<'info, TokenAccount>,
+    user_destination_token_account: AccountInfo<'info>,
     user_source_owner: AccountInfo<'info>,
     
     // audaces_protocol_program_id: AccountInfo<'info>,
