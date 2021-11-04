@@ -9,6 +9,8 @@ use audaces_protocol::state::PositionType;
 pub mod utils;
 pub mod amm_instruction;
 
+use utils::*;
+
 #[program]
 pub mod vovo {
     use super::*;
@@ -32,20 +34,6 @@ pub mod vovo {
         pub mercurial_lp_token:Pubkey,
 
         pub bonfida_user_account:Pubkey,
-
-
-        // for Mercurial
-        // pub mercurial_program_id:Pubkey,
-        // pub mercurial_swap_account:Pubkey,
-        // pub mercurial_token_program_id:Pubkey,
-        // pub mercurial_pool_authority:Pubkey,
-        // pub mercurial_transfer_authority:Pubkey,
-        // pub mercurial_swap_token:Pubkey,
-        // pub mercurial_pool_token_mint:Pubkey,
-        // pub mercurial_source_token:Pubkey,
-        // pub mercurial_lp_token:Pubkey,
-
-        // pub mercurial_withdraw_min_amount: u64
     }
 
     impl VovoData {
@@ -56,25 +44,9 @@ pub mod vovo {
             performance_fee: u64, 
             leverage: u64, 
             total_trade_profit: u64,
-            user_account_size: u64,
 
             mer_reward_token:Pubkey,
             usdc_reward_token:Pubkey,
-
-            // mercurial_program_id:Pubkey,
-            // mercurial_swap_account:Pubkey,
-            // mercurial_token_program_id:Pubkey,
-            // mercurial_pool_authority:Pubkey,
-            // mercurial_transfer_authority:Pubkey,
-            // mercurial_swap_token:Pubkey,
-            // mercurial_pool_token_mint:Pubkey,
-            // mercurial_source_token:Pubkey,
-            // mercurial_lp_token:Pubkey,
-
-            // mercurial_reward_token:Pubkey,
-
-            // mercurial_withdraw_min_amount:u64
-
         ) -> Result<Self> {
 
             Ok(Self {
@@ -94,20 +66,6 @@ pub mod vovo {
 
                 bonfida_user_account:*ctx.accounts.bonfida_user_account.key,
                 mercurial_lp_token:*ctx.accounts.authority.key //temp
-
-                // mercurial_program_id,
-                // mercurial_swap_account,
-                // mercurial_token_program_id,
-                // mercurial_pool_authority,
-                // mercurial_transfer_authority,
-                // mercurial_swap_token,
-                // mercurial_pool_token_mint,
-                // mercurial_source_token,
-                // mercurial_lp_token,
-
-                // mercurial_reward_token,
-
-                // mercurial_withdraw_min_amount
             })
         }
         pub fn deposit(&mut self, ctx: Context<Deposit>, amount: u64)->Result<()>{
@@ -129,7 +87,7 @@ pub mod vovo {
 
             Ok(())
         }
-        pub fn withdraw(&mut self, ctx: Context<Withdraw>, amount: u64, mercurial_withdraw_min_amount:u64)->Result<()>{
+        pub fn withdraw(&mut self, ctx: Context<Withdraw>, amount: u64)->Result<()>{
 
             if ctx.accounts.user_info.deposit_balance <= 0 {
                 return Err(ErrorCode::NoDepositedBalance.into());
@@ -147,34 +105,52 @@ pub mod vovo {
                 ctx.accounts.mercurial_token_program_id.key,
                 ctx.accounts.mercurial_pool_authority.key,
                 ctx.accounts.mercurial_transfer_authority.key,
-                vec![ctx.accounts.mercurial_swap_token.key],
+                vec![
+                    ctx.accounts.mercurial_swap_token_usdc.key,
+                    ctx.accounts.mercurial_swap_token_usdt.key,
+                    ctx.accounts.mercurial_swap_token_wust.key
+                ],
                 ctx.accounts.mercurial_pool_token_mint.key,
-                vec![&ctx.accounts.token_pool_usdc_account.key()],
+                vec![
+                    &ctx.accounts.token_pool_usdc.key(),
+                    ctx.accounts.token_pool_usdt.key,
+                    ctx.accounts.token_pool_wust.key,
+                ],
                 ctx.accounts.mercurial_lp_token.key,
                 _amount,
-                vec![mercurial_withdraw_min_amount]
+                vec![0]
             )?;
 
-            invoke(
+            invoke_signed(
                 &ix,
                 &[
                     ctx.accounts.mercurial_swap_account.clone(), 
                     ctx.accounts.mercurial_token_program_id.clone(), 
                     ctx.accounts.mercurial_pool_authority.clone(), 
                     ctx.accounts.mercurial_transfer_authority.clone(),
-                    ctx.accounts.mercurial_swap_token.clone(),
+                    ctx.accounts.mercurial_swap_token_usdc.clone(),
+                    ctx.accounts.mercurial_swap_token_usdt.clone(),
+                    ctx.accounts.mercurial_swap_token_wust.clone(),
                     ctx.accounts.mercurial_pool_token_mint.clone(),
-                    ctx.accounts.token_pool_usdc_account.to_account_info().clone(),
+                    ctx.accounts.token_pool_usdc.to_account_info().clone(),
+                    ctx.accounts.token_pool_usdt.clone(),
+                    ctx.accounts.token_pool_wust.clone(),
                     ctx.accounts.mercurial_lp_token.clone()
-                    ],
+                ],
+                &[
+                    &[
+                        ctx.program_id.as_ref(),
+                        &[ctx.accounts.vovo_data.nonce]
+                    ]
+                ]
             )?;
 
             
             // transfer from pool to user
             let cpi_accounts = Transfer {
-                from: ctx.accounts.token_pool_usdc_account.to_account_info().clone(),
+                from: ctx.accounts.token_pool_usdc.to_account_info().clone(),
                 to: ctx.accounts.to.clone(),
-                authority: ctx.accounts.pool_signer.clone(),
+                authority: ctx.accounts.pool_authority.clone(),
             };
 
             let seeds = &[
@@ -214,7 +190,6 @@ pub mod vovo {
                 ],
                 ctx.accounts.mercurial_lp_token.key,
                 vec![ctx.accounts.token_pool_usdc.amount, 0, 0],
-                //vec![usdc_amount, 0, 0],
                 min_mint_amount
             )?;
 
@@ -238,7 +213,6 @@ pub mod vovo {
                     &[
                         ctx.program_id.as_ref(),
                         &[ctx.accounts.vovo_data.nonce]
-                        //&[nonce]
                     ]
                 ]
                 
@@ -253,16 +227,16 @@ pub mod vovo {
             &mut self, 
             ctx: Context<Poke>,
 
-            // closing_collateral: u64,
-            // closing_v_coin: u64,
-            // position_index: u16,
-            // predicted_entry_price: u64,
-            // maximum_slippage_margin: u64,
+            closing_collateral: u64,
+            closing_v_coin: u64,
+            position_index: u16,
+            predicted_entry_price: u64,
+            maximum_slippage_margin: u64,
 
-            // side: u8, 
-            // instance_index: u8, 
-            // collateral: u64, 
-            // leverage: u64, 
+            side: u8, 
+            instance_index: u8, 
+            collateral: u64, 
+            leverage: u64, 
         )->Result<()>{
 
             // raydium swap
@@ -283,7 +257,7 @@ pub mod vovo {
                 ctx.accounts.raydium_serum_pc_vault_account.key, 
                 ctx.accounts.raydium_serum_vault_signer.key, 
                 &ctx.accounts.user_source_token_account.key(), 
-                ctx.accounts.user_destination_token_account.key, 
+                &ctx.accounts.user_destination_token_account.key(), 
                 ctx.accounts.user_source_owner.key, 
                 ctx.accounts.user_source_token_account.amount,
                 0
@@ -308,7 +282,7 @@ pub mod vovo {
                     ctx.accounts.raydium_serum_pc_vault_account.clone(),
                     ctx.accounts.raydium_serum_vault_signer.clone(),
                     ctx.accounts.user_source_token_account.to_account_info().clone(), 
-                    ctx.accounts.user_destination_token_account.clone(),
+                    ctx.accounts.user_destination_token_account.to_account_info().clone(),
                     ctx.accounts.user_source_owner.clone(),
                 ],
                 &[
@@ -317,138 +291,169 @@ pub mod vovo {
                         &[ctx.accounts.vovo_data.nonce]
                     ]
                 ]
-                
             )?;
+
+            if check_open_position(&ctx.accounts.user_account.clone(), position_index)? {
+                // close position
+                let ix = audaces_protocol::instruction::cpi::close_position
+                (
+                    *ctx.accounts.audaces_protocol_program_id.key,
+                    *ctx.accounts.market_account.key,
+                    *ctx.accounts.market_signer_account.key,
+                    ctx.accounts.market_vault.key(),
+                    *ctx.accounts.oracle_account.key,
+                    *ctx.accounts.instance_account.key,
+                    *ctx.accounts.user_account.key,
+                    *ctx.accounts.user_account_owner.key,
+                    *ctx.accounts.bonfida_bnb.key,
+                    &vec![*ctx.accounts.memory_page.key],
+                    closing_collateral,
+                    closing_v_coin,
+                    position_index,
+                    predicted_entry_price,
+                    maximum_slippage_margin,
+                    None, 
+                    None,
+                );
+
+                invoke_signed(
+                    &ix, 
+                    &[
+                        ctx.accounts.token_program.clone(),
+                        ctx.accounts.clock_sysvar.clone(),
+                        ctx.accounts.market_account.clone(),
+                        ctx.accounts.instance_account.clone(),
+                        ctx.accounts.market_signer_account.clone(),
+                        ctx.accounts.market_vault.to_account_info().clone(),
+                        ctx.accounts.bonfida_bnb.clone(),
+                        ctx.accounts.oracle_account.clone(),
+                        ctx.accounts.user_account_owner.clone(),
+                        ctx.accounts.user_account.clone(),
+                        ctx.accounts.trade_label.clone(),
+                        ctx.accounts.memory_page.clone(),
+                    ],
+                    &[
+                        &[
+                            ctx.program_id.as_ref(),
+                            &[ctx.accounts.vovo_data.nonce]
+                        ]
+                    ]
+                )?;
+            }
             
-            // // close position
-            // let mut ix = audaces_protocol::instruction::cpi::close_position
-            // (
-            //     *ctx.accounts.audaces_protocol_program_id.key,
-            //     *ctx.accounts.market_account.key,
-            //     *ctx.accounts.market_signer_account.key,
-            //     ctx.accounts.market_vault.key(),
-            //     *ctx.accounts.oracle_account.key,
-            //     *ctx.accounts.instance_account.key,
-            //     *ctx.accounts.user_account.key,
-            //     *ctx.accounts.user_account_owner.key,
-            //     *ctx.accounts.bonfida_bnb.key,
-            //     &vec![*ctx.accounts.memory_page.key],
-            //     closing_collateral,
-            //     closing_v_coin,
-            //     position_index,
-            //     predicted_entry_price,
-            //     maximum_slippage_margin,
-            //     None, 
-            //     None,
-            // );
+            if ctx.accounts.market_vault.amount > 0 {
+                let ix = audaces_protocol::instruction::cpi::withdraw_budget(
+                    *ctx.accounts.audaces_protocol_program_id.key,
+                    *ctx.accounts.market_account.key,
+                    *ctx.accounts.market_signer_account.key,
+                    ctx.accounts.market_vault.key(),
+                    ctx.accounts.market_vault.amount,
+                    *ctx.accounts.target_account.key,
+                    *ctx.accounts.open_positions_owner_account.key,
+                    *ctx.accounts.open_positions_account.key,
+                );
+                invoke_signed(
+                    &ix, 
+                    &[
+                        ctx.accounts.token_program.clone(),
+                        ctx.accounts.market_account.clone(),
+                        ctx.accounts.market_signer_account.clone(),
+                        ctx.accounts.market_vault.to_account_info().clone(),
+                        ctx.accounts.open_positions_owner_account.clone(),
+                        ctx.accounts.open_positions_account.clone(),
+                        ctx.accounts.target_account.clone(),
+                    ],
+                    &[
+                        &[
+                            ctx.program_id.as_ref(),
+                            &[ctx.accounts.vovo_data.nonce]
+                        ]
+                    ]
+                )?;
+            }
 
-            // invoke(
-            //     &ix, 
-            //     &[
-            //         ctx.accounts.token_program.clone(),
-            //         ctx.accounts.clock_sysvar.clone(),
-            //         ctx.accounts.market_account.clone(),
-            //         ctx.accounts.instance_account.clone(),
-            //         ctx.accounts.market_signer_account.clone(),
-            //         ctx.accounts.market_vault.to_account_info().clone(),
-            //         ctx.accounts.bonfida_bnb.clone(),
-            //         ctx.accounts.oracle_account.clone(),
-            //         ctx.accounts.user_account_owner.clone(),
-            //         ctx.accounts.user_account.clone(),
-            //         ctx.accounts.trade_label.clone(),
-            //         ctx.accounts.memory_page.clone(),
-            //     ]
-            // )?;
+            if ctx.accounts.user_destination_token_account.amount > 0 {
+                let ix = audaces_protocol::instruction::cpi::add_budget(
+                    *ctx.accounts.audaces_protocol_program_id.key,
+                    *ctx.accounts.market_account.key,
+                    ctx.accounts.market_vault.key(),
+                    ctx.accounts.user_destination_token_account.amount, 
+                    *ctx.accounts.source_owner.key,
+                    *ctx.accounts.source_token_account.key,
+                    *ctx.accounts.open_positions_account.key,
+                );
+    
+                invoke_signed(
+                    &ix, 
+                    &[
+                        ctx.accounts.token_program.clone(),
+                        ctx.accounts.market_account.clone(),
+                        ctx.accounts.market_vault.to_account_info().clone(),
+                        ctx.accounts.open_positions_account.clone(),
+                        ctx.accounts.source_owner.clone(),
+                        ctx.accounts.source_token_account.clone(),
+                    ],
+                    &[
+                        &[
+                            ctx.program_id.as_ref(),
+                            &[ctx.accounts.vovo_data.nonce]
+                        ]
+                    ]
+                )?;
+            }
+            
+            if ctx.accounts.market_vault.amount > 5000000 {
+                let _side = if side == 0 { PositionType::Short} else {PositionType::Long};
 
-            // ix = audaces_protocol::instruction::cpi::withdraw_budget(
-            //     *ctx.accounts.audaces_protocol_program_id.key,
-            //     *ctx.accounts.market_account.key,
-            //     *ctx.accounts.market_signer_account.key,
-            //     ctx.accounts.market_vault.key(),
-            //     ctx.accounts.market_vault.amount,
-            //     *ctx.accounts.target_account.key,
-            //     *ctx.accounts.open_positions_owner_account.key,
-            //     *ctx.accounts.open_positions_account.key,
-            // );
+                let mut ix = audaces_protocol::instruction::cpi::open_position(
+                    *ctx.accounts.audaces_protocol_program_id.key,
+                    *ctx.accounts.market_account.key,
+                    *ctx.accounts.market_signer_account.key,
+                    ctx.accounts.market_vault.key(),
+                    *ctx.accounts.oracle_account.key,
+                    *ctx.accounts.instance_account.key,
+                    *ctx.accounts.user_account.key,
+                    *ctx.accounts.user_account_owner.key,
+                    *ctx.accounts.bonfida_bnb.key,
+                    &vec![*ctx.accounts.memory_page.key],
+                    _side,
+                    instance_index,
+                    collateral,
+                    leverage,
+                    predicted_entry_price,
+                    maximum_slippage_margin,
+                    None,
+                    None
+                );
 
-            // invoke(
-            //     &ix, 
-            //     &[
-            //         ctx.accounts.token_program.clone(),
-            //         ctx.accounts.market_account.clone(),
-            //         ctx.accounts.market_signer_account.clone(),
-            //         ctx.accounts.market_vault.to_account_info().clone(),
-            //         ctx.accounts.open_positions_account.clone(),
-            //         ctx.accounts.source_owner.clone(),
-            //         ctx.accounts.source_token_account.clone(),
-            //     ]
-            // )?;
-
-            // ix = audaces_protocol::instruction::cpi::add_budget(
-            //     *ctx.accounts.audaces_protocol_program_id.key,
-            //     *ctx.accounts.market_account.key,
-            //     ctx.accounts.market_vault.key(),
-            //     ctx.accounts.usdc_reward_token.amount, 
-            //     *ctx.accounts.source_owner.key,
-            //     *ctx.accounts.source_token_account.key,
-            //     *ctx.accounts.open_positions_account.key,
-            // );
-
-            // invoke(
-            //     &ix, 
-            //     &[
-            //         ctx.accounts.token_program.clone(),
-            //         ctx.accounts.market_account.clone(),
-            //         ctx.accounts.market_vault.to_account_info().clone(),
-            //         ctx.accounts.open_positions_account.clone(),
-            //         ctx.accounts.source_owner.clone(),
-            //         ctx.accounts.source_token_account.clone(),
-            //     ]
-            // )?;
-
-            // let _side = if side == 0 { PositionType::Short} else {PositionType::Long};
-
-            // ix = audaces_protocol::instruction::cpi::open_position(
-            //     *ctx.accounts.audaces_protocol_program_id.key,
-            //     *ctx.accounts.market_account.key,
-            //     *ctx.accounts.market_signer_account.key,
-            //     ctx.accounts.market_vault.key(),
-            //     *ctx.accounts.oracle_account.key,
-            //     *ctx.accounts.instance_account.key,
-            //     *ctx.accounts.user_account.key,
-            //     *ctx.accounts.user_account_owner.key,
-            //     *ctx.accounts.bonfida_bnb.key,
-            //     &vec![*ctx.accounts.memory_page.key],
-            //     _side,
-            //     instance_index,
-            //     collateral,
-            //     leverage,
-            //     predicted_entry_price,
-            //     maximum_slippage_margin,
-            //     None,
-            //     None
-            // );
-
-            // invoke(
-            //     &ix, 
-            //     &[
-            //         ctx.accounts.token_program.clone(),
-            //         ctx.accounts.clock_sysvar.clone(),
-            //         ctx.accounts.market_account.clone(),
-            //         ctx.accounts.instance_account.clone(),
-            //         ctx.accounts.market_signer_account.clone(),
-            //         ctx.accounts.market_vault.to_account_info().clone(),
-            //         ctx.accounts.bonfida_bnb.clone(),
-            //         ctx.accounts.user_account_owner.clone(),
-            //         ctx.accounts.user_account.clone(),
-            //         ctx.accounts.trade_label.clone(),
-            //         ctx.accounts.oracle_account.clone(),
-            //         ctx.accounts.memory_page.clone(),
-            //     ]
-            // )?;
+                invoke_signed(
+                    &ix, 
+                    &[
+                        ctx.accounts.token_program.clone(),
+                        ctx.accounts.clock_sysvar.clone(),
+                        ctx.accounts.market_account.clone(),
+                        ctx.accounts.instance_account.clone(),
+                        ctx.accounts.market_signer_account.clone(),
+                        ctx.accounts.market_vault.to_account_info().clone(),
+                        ctx.accounts.bonfida_bnb.clone(),
+                        ctx.accounts.user_account_owner.clone(),
+                        ctx.accounts.user_account.clone(),
+                        ctx.accounts.trade_label.clone(),
+                        ctx.accounts.oracle_account.clone(),
+                        ctx.accounts.memory_page.clone(),
+                    ],
+                    &[
+                        &[
+                            ctx.program_id.as_ref(),
+                            &[ctx.accounts.vovo_data.nonce]
+                        ]
+                    ]
+                )?;
+            }
 
             Ok(()) 
         }
+        
 
     }
     pub fn create_user(ctx: Context<CreateUser>, nonce: u8)->ProgramResult{
@@ -512,24 +517,39 @@ pub struct CreateUser<'info> {
 }
 #[derive(Accounts)]
 pub struct Withdraw<'info> {
+    #[account("token_program.key == &token::ID")]
+    token_program: AccountInfo<'info>,
+    #[account(mut)]
     vovo_data: ProgramAccount<'info, VovoData>,
     #[account(mut)]
     user_info: ProgramAccount<'info, UserInfo>,
     #[account(mut)]
     to: AccountInfo<'info>,
-    token_pool_usdc_account: Account<'info, TokenAccount>,
-    pool_signer: AccountInfo<'info>,
-    owner: AccountInfo<'info>,
-    #[account("token_program.key == &token::ID")]
-    token_program: AccountInfo<'info>,
+
+    pool_authority: AccountInfo<'info>,
 
     mercurial_program:AccountInfo<'info>,
+    #[account(mut)]
     mercurial_swap_account:AccountInfo<'info>,
+    #[account("token_program.key == &token::ID")]
     mercurial_token_program_id:AccountInfo<'info>,
     mercurial_pool_authority:AccountInfo<'info>,
     mercurial_transfer_authority:AccountInfo<'info>,
-    mercurial_swap_token:AccountInfo<'info>,
+    #[account(mut)]
+    mercurial_swap_token_usdc:AccountInfo<'info>,
+    #[account(mut)]
+    mercurial_swap_token_usdt:AccountInfo<'info>,
+    #[account(mut)]
+    mercurial_swap_token_wust:AccountInfo<'info>,
+    #[account(mut)]
     mercurial_pool_token_mint:AccountInfo<'info>,
+    #[account(mut)]
+    token_pool_usdc:Account<'info, TokenAccount>,
+    #[account(mut)]
+    token_pool_usdt:AccountInfo<'info>,
+    #[account(mut)]
+    token_pool_wust:AccountInfo<'info>,
+    #[account(mut)]
     mercurial_lp_token:AccountInfo<'info>,
 }
 
@@ -599,28 +619,28 @@ pub struct Poke<'info> {
     raydium_serum_vault_signer: AccountInfo<'info>,
 
     user_source_token_account: Account<'info, TokenAccount>,
-    user_destination_token_account: AccountInfo<'info>,
+    user_destination_token_account: Account<'info, TokenAccount>,
     user_source_owner: AccountInfo<'info>,
     
-    // audaces_protocol_program_id: AccountInfo<'info>,
-    // market_account: AccountInfo<'info>,
-    // market_signer_account: AccountInfo<'info>,
-    // market_vault: Account<'info, TokenAccount>,
-    // target_account: AccountInfo<'info>,
-    // open_positions_owner_account: AccountInfo<'info>,
-    // oracle_account: AccountInfo<'info>,
-    // instance_account: AccountInfo<'info>,
-    // user_account: AccountInfo<'info>,
-    // user_account_owner: AccountInfo<'info>,
-    // bonfida_bnb: AccountInfo<'info>,
-    // memory_page: AccountInfo<'info>,
+    audaces_protocol_program_id: AccountInfo<'info>,
+    market_account: AccountInfo<'info>,
+    market_signer_account: AccountInfo<'info>,
+    market_vault: Account<'info, TokenAccount>,
+    target_account: AccountInfo<'info>,
+    open_positions_owner_account: AccountInfo<'info>,
+    oracle_account: AccountInfo<'info>,
+    instance_account: AccountInfo<'info>,
+    user_account: AccountInfo<'info>,
+    user_account_owner: AccountInfo<'info>,
+    bonfida_bnb: AccountInfo<'info>,
+    memory_page: AccountInfo<'info>,
 
-    // source_owner: AccountInfo<'info>,
-    // source_token_account: AccountInfo<'info>,
-    // open_positions_account: AccountInfo<'info>,
+    source_owner: AccountInfo<'info>,
+    source_token_account: AccountInfo<'info>,
+    open_positions_account: AccountInfo<'info>,
 
-    // clock_sysvar: AccountInfo<'info>,
-    // trade_label: AccountInfo<'info>,
+    clock_sysvar: AccountInfo<'info>,
+    trade_label: AccountInfo<'info>,
 }
 #[derive(Accounts)]
 pub struct InitializeUserInfo<'info> {

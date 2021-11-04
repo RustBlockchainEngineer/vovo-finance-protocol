@@ -2,8 +2,19 @@ use anchor_lang::prelude::*;
 use solana_program::{
     program::{ invoke, invoke_signed},
     system_instruction,
+    program_pack::{Pack},
 };
+use audaces_protocol::state::{user_account::UserAccountState};
 use std::convert::TryInto;
+
+pub fn check_open_position<'a>(user_account: &AccountInfo<'a>, position_index:u16)->Result<bool, ProgramError>{
+    let mut user_account_header =
+        UserAccountState::unpack_from_slice(&user_account.data.borrow())?;
+    if (user_account_header.number_of_open_positions as i32) - 1 < (position_index as i32) {
+        return Ok(false);
+    }
+    return Ok(true);
+}
 
 #[inline(always)]
 pub fn create_or_allocate_account_raw<'a>(
