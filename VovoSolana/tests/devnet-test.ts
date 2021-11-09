@@ -8,46 +8,40 @@ import {
     PublicKey,
     Keypair,
     SystemProgram,
-    SYSVAR_RENT_PUBKEY,
-    Commitment,
     Transaction,
-    sendAndConfirmTransaction
 } from "@solana/web3.js";
-import { newAccountWithLamports, TestSender } from './helpers';
+import { TestSender } from './helpers';
 import { StableSwapNPool } from './mercurial';
 
-import {createMarket, addInstance, addBudget, Numberu64} from '@audaces/perps';
-
-const DEVNET_MODE = true;
-const TOKEN_MINT_DECIMALS = 6;
-const MERCURIAL_POOL_ACCOUNT = Keypair.generate()
-
+//-------------------------User Information-----------------------------------------------------------------------------------------------------
 const USER_WALLET = "EscNSusYYGAn69AZGjy8BpA4e9MXtvLeRCHJ3LK3b6vo";
 const USER_MER_ACCOUNT = "E9domVp374m2Cn86WkDoJipAmRJhST3TJ4yem5L8rvoP";
 const USER_USDC_ACCOUNT = "GtDXsNLWLkEbNSKSBrtF9v9UgVTMMAWgnk77d39rU54a";
 const USER_USDT_ACCOUNT = "GUhW6vL3naidjxyq2ujYdKYho2o8nGzDXA9VCgFYNRY";
 const USER_wUST_ACCOUNT = "3U6wr1kMgpTUKbfcwKsuH6XfFN97NywCE7gfFBQ6FY83";
+//----------------------------------------------------------------------------------------------------------------------------------------------
 
-const USDC_MINT_ADDRESS = DEVNET_MODE?"F2sTkVdLXGpRcBDi6Jg2UxKpAXtEPmbZQQMEJo9MXaGw":"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
-const USDT_MINT_ADDRESS = DEVNET_MODE?"7vry9DfjJRNKSrFjx6Z7exftrmv4tMoYf5LQ8vqMKumQ":"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
-const wUST_MINT_ADDRESS = DEVNET_MODE?"6EfU4qzfRE5SXiwYFD2suHt6xiz6VoKDmcYwS8oTZoXy":"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
-const MER_MINT_ADDRESS = DEVNET_MODE?"Ch4aKo9mBBuXAUqrkkTpLnopZGJmoMmEV43pQmqqKxrM":"MERt85fc5boKw3BW1eYdxonEuJNvXbiMbs6hvheau5K";
 
+//------------------------Token Addresses-------------------------------------------------------------------------------------------------------
+const USDC_MINT_ADDRESS = "F2sTkVdLXGpRcBDi6Jg2UxKpAXtEPmbZQQMEJo9MXaGw";
+const USDT_MINT_ADDRESS = "7vry9DfjJRNKSrFjx6Z7exftrmv4tMoYf5LQ8vqMKumQ";
+const wUST_MINT_ADDRESS = "6EfU4qzfRE5SXiwYFD2suHt6xiz6VoKDmcYwS8oTZoXy";
+const MER_MINT_ADDRESS = "Ch4aKo9mBBuXAUqrkkTpLnopZGJmoMmEV43pQmqqKxrM";
+//----------------------------------------------------------------------------------------------------------------------------------------------
+
+
+//-----------------------Mercurial Information--------------------------------------------------------------------------------------------------
 const MERCURIAL_PROGRAM = "MERLuDFBMmsHnsBPZw2sDQZHvXFMwp8EdjudcU2HKky";
+const MERCURIAL_POOL_ACCOUNT = Keypair.generate()
+//----------------------------------------------------------------------------------------------------------------------------------------------
 
-const BONFIDA_PROGRAM = DEVNET_MODE?"3541FhgphoK6G1QKmEzdyxvKx8KyFjNkxsCN6UnjYyUU":"WvmTNLpGMVbwJVYztYL4Hnsy82cJhQorxjnnXcRm3b6";
-const BONFIDA_MARKET_SOL = "jeVdn6rxFPLpCH9E6jmk39NTNx2zgTmKiVXBDiApXaV";
-const BONFIDA_MARKET_VAULT_SOL = "LXMAV4hRP44N9VoL3XsSo3HqHP2kL1GxqwvJ8qGitv1";
-const BONFIDA_MARKET_SIGNER_SOL = "G3zuVcG5uGvnw4dCAWeD7BvTo4CTt2vXsgUjqACnXLpN";
-const BONFIDA_TARGET_SOL = USER_USDC_ACCOUNT;
-const BONFIDA_SOURCE_OWNER = USER_WALLET;
-const BONFIDA_SOURCE_TOKEN = USER_USDC_ACCOUNT;
-const TRADE_LABEL = "TradeRecord11111111111111111111111111111111";
 
-const BONFIDA_OPEN_POSITION_SOL = "CJ3XSni4VQjHR7mXD2ybtJFf99V14rzPG6QTAULDJrNX";
-
+//-----------------------Bonfida Information--------------------------------------------------------------------------------------------------
+const BONFIDA_PROGRAM = "3541FhgphoK6G1QKmEzdyxvKx8KyFjNkxsCN6UnjYyUU";
 const DEFAULT_OPENPOSITIONS_CAPACITY = 3;
 const BONFIDA_USER_ACCOUNT_SIZE = 80 + 43 * DEFAULT_OPENPOSITIONS_CAPACITY;
+//----------------------------------------------------------------------------------------------------------------------------------------------
+
 
 describe('VovoSolana', () => {
 
