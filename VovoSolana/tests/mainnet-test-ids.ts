@@ -1,10 +1,11 @@
 
 //-------------------------User Information-----------------------------------------------------------------------------------------------------
 export const USER_WALLET = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
-export const USER_MER_ACCOUNT = "GNn8XYjQnmvPbitA8xoFrstv78FzvxkSwukaSLiCvJUQ";
-export const USER_USDC_ACCOUNT = "9gkW2JWWHu3wmPMAWTNpWJ2UceDS1ZbArpaE31ezrE6r";
-export const USER_USDT_ACCOUNT = "61kXUV3TsWMmfg25JPvKFFjKt17MxBSsafgjvkqu7Fo2";
-export const USER_wUST_ACCOUNT = "53MTYmJp61b3FR35AARDYVEMPPCg7UZQoH29TVrYYCbq";
+
+export const USER_USDC_ACCOUNT = "BtQpc9LrUuwS4pzcJJPUgLUCwtjD6MvpmHJ94ntQyruh";
+export const USER_USDT_ACCOUNT = "5cHzLWZJsfdJ6PLxH4RkBD8aJPiUZMfDRizRLYDa9gSM";
+export const USER_wUST_ACCOUNT = "ESHKAtFArcmGTNFDMXnrX8usWLTRbTpnHv5Kr73mBpdk";
+export const USER_MER_ACCOUNT = "5U4zA2Wu1uGXNUNeznuFSQo2Qs5NXoVgHmnnCa7JyVuv";
 //----------------------------------------------------------------------------------------------------------------------------------------------
 
 
