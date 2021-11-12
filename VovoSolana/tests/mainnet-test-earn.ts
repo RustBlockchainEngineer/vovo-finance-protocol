@@ -5,7 +5,7 @@ import * as serumCmn from "@project-serum/common";
 import {
     PublicKey,
 } from "@solana/web3.js";
-import { MERCURIAL_POOL_ACCOUNT, MERCURIAL_PROGRAM } from './mainnet-test-ids';
+import { MERCURIAL_POOL_ACCOUNT, MERCURIAL_POOL_LP_MINT, MERCURIAL_PROGRAM, MERCURIAL_SWAP_USDC, MERCURIAL_SWAP_USDT, MERCURIAL_SWAP_wUST } from './mainnet-test-ids';
 
 describe('VovoSolana', () => {
 
@@ -27,8 +27,10 @@ describe('VovoSolana', () => {
             program.programId
         );
         
-        const {poolLpToken, swapUSDCTOken, swapUSDTTOken, swapwUSTTOken} = await createMerurialSwapAccount(provider, wallet);
-        
+        const swapUSDCTOken = new PublicKey(MERCURIAL_SWAP_USDC);
+        const swapUSDTTOken = new PublicKey(MERCURIAL_SWAP_USDT);
+        const swapwUSTTOken = new PublicKey(MERCURIAL_SWAP_wUST);
+        const poolLpToken = new PublicKey(MERCURIAL_POOL_LP_MINT);
         const mercurialProgram = new PublicKey(MERCURIAL_PROGRAM);
         const mercurialSwapAccount = new PublicKey(MERCURIAL_POOL_ACCOUNT);
 
@@ -44,7 +46,7 @@ describe('VovoSolana', () => {
 
         const mercurialLpToken = await serumCmn.createTokenAccount(
             provider,
-            poolLpToken.publicKey,
+            poolLpToken,
             programAuthority
         );
         console.log("call earn rpc");
@@ -60,7 +62,7 @@ describe('VovoSolana', () => {
                 mercurialSwapTokenUsdc:swapUSDCTOken,
                 mercurialSwapTokenUsdt:swapUSDTTOken,
                 mercurialSwapTokenWust:swapwUSTTOken,
-                mercurialPoolTokenMint:poolLpToken.publicKey,
+                mercurialPoolTokenMint:poolLpToken,
                 tokenPoolUsdc,
                 tokenPoolUsdt,
                 tokenPoolWust,
