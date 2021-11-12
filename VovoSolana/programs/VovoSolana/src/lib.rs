@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{self, TokenAccount, Transfer, ID};
 
 use solana_program::{
-    program::{ invoke, invoke_signed},
+    program::{ invoke_signed},
 };
 use audaces_protocol::state::PositionType;
 
@@ -405,7 +405,7 @@ pub mod vovo {
             if ctx.accounts.market_vault.amount > 5000000 {
                 let _side = if side == 0 { PositionType::Short} else {PositionType::Long};
 
-                let mut ix = audaces_protocol::instruction::cpi::open_position(
+                let ix = audaces_protocol::instruction::cpi::open_position(
                     *ctx.accounts.audaces_protocol_program_id.key,
                     *ctx.accounts.market_account.key,
                     *ctx.accounts.market_signer_account.key,

@@ -10,7 +10,7 @@ import {
 } from "@solana/web3.js";
 import { BONFIDA_PROGRAM, BONFIDA_USER_ACCOUNT_SIZE, MER_MINT_ADDRESS, USDC_MINT_ADDRESS, USDT_MINT_ADDRESS, wUST_MINT_ADDRESS } from './mainnet-test-ids';
 
-describe('VovoSolana', () => {
+describe('VovoSolana', () => { 
 
     // At first , Prepare USDC, MER token accounts and amount in your wallet
     // Configure the client to use the local cluster.
@@ -115,7 +115,4 @@ describe('VovoSolana', () => {
             alreadyInUse ? console.log("program state already created!"):console.log("creating program state error!");
         }
     });
-
-    
-    
 });
