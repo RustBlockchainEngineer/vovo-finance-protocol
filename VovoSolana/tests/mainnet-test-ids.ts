@@ -19,7 +19,7 @@ export const MER_MINT_ADDRESS = "MERt85fc5boKw3BW1eYdxonEuJNvXbiMbs6hvheau5K";
 
 //-----------------------Mercurial Information--------------------------------------------------------------------------------------------------
 export const MERCURIAL_PROGRAM = "MERLuDFBMmsHnsBPZw2sDQZHvXFMwp8EdjudcU2HKky";
-export const MERCURIAL_POOL_ACCOUNT = "MERLuDFBMmsHnsBPZw2sDQZHvXFMwp8EdjudcU2HKky"
+export const MERCURIAL_POOL_ACCOUNT = "USD42Jvem43aBSLqT83GZmvRbzAjpKBonQYBQhni7Cv"
 export const MERCURIAL_SWAP_USDC = "Go93HBNLMK6QnSHyZTViAoti9GCmSRhkeZMiVoJmcrud"
 export const MERCURIAL_SWAP_USDT = "2uZVPMdS8VFwMEZjZNzP1f78m1zaqvT3R2JwMs1w9fU3"
 export const MERCURIAL_SWAP_wUST = "5nazSj6MfaEeuAoQezMG3raWuZiyFjE7fmURUgDeP8cF"
