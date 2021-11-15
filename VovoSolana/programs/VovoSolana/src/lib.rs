@@ -5,9 +5,8 @@ use solana_program::{
     program::{ invoke_signed},
 };
 use audaces_protocol::state::PositionType;
-
+use raydium_instruction::amm_instruction::*;
 pub mod utils;
-pub mod amm_instruction;
 
 use utils::*;
 
@@ -240,7 +239,7 @@ pub mod vovo {
         )->Result<()>{
 
             // raydium swap
-            let ix = amm_instruction::swap(
+            let ix = swap(
                 ctx.accounts.raydium_program_id.key, 
                 ctx.accounts.raydium_amm_id.key, 
                 ctx.accounts.raydium_amm_authority.key, 

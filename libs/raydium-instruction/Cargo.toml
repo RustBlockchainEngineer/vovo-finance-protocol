@@ -1,0 +1,16 @@
+[package]
+name = "raydium-instruction"
+version = "0.1.0"
+description = "Created with Anchor"
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "raydium_instruction"
+
+[features]
+default = []
+
+[dependencies]
+solana-program = "1.7.8"
+spl-token = {version ="3.2.0", features=["no-entrypoint"]}
