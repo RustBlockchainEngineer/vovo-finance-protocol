@@ -42,13 +42,28 @@ describe('VovoSolana', () => {
         const tokenPoolUsdc = programState.tokenPoolUsdc;
         const tokenPoolUsdt = programState.tokenPoolUsdt; 
         const tokenPoolWust = programState.tokenPoolWust;
+
+
         console.log("tokenPoolUsdc",tokenPoolUsdc.toBase58())
 
-        const mercurialLpToken = await serumCmn.createTokenAccount(
-            provider,
-            poolLpToken,
-            programAuthority
-        );
+        // const mercurialLpToken = await serumCmn.createTokenAccount(
+        //     provider,
+        //     poolLpToken,
+        //     programAuthority
+        // );
+
+        // already created here
+        const mercurialLpToken = new PublicKey("9WeFLztFhZGQfiYtoRB4Vuf5oEk48Lj5b9ytEN4FyFJJ");
+
+        console.log("mercurialSwapTokenUsdc",swapUSDCTOken.toBase58())
+        console.log("mercurialSwapTokenUsdt",swapUSDTTOken.toBase58())
+        console.log("mercurialSwapTokenWust",swapwUSTTOken.toBase58())
+        console.log("mercurialPoolTokenMint",poolLpToken.toBase58())
+        console.log("tokenPoolUsdc",tokenPoolUsdc.toBase58())
+        console.log("tokenPoolUsdt",tokenPoolUsdt.toBase58())
+        console.log("tokenPoolWust",tokenPoolWust.toBase58())
+        console.log("mercurialLpToken",mercurialLpToken.toBase58())
+
         console.log("call earn rpc");
         await program.state.rpc.earn(new anchor.BN(0 * 1000000), {
             accounts: {

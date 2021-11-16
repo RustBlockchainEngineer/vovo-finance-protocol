@@ -93,12 +93,11 @@ describe('VovoSolana', () => {
                 performanceFee, 
                 leverage, 
                 totalTradeProfit,
-    
                 MERRewardTokenAccount,
                 USDCRewardTokenAccount,
                 {
                     accounts:{
-                        authority: walletPubkey,
+                        authority: programAuthority,
                         tokenMint: USDCPubkey,
                         tokenPoolUsdcAccount: USDCPoolTokenAccount,
                         tokenPoolUsdtAccount: USDTPoolTokenAccount,

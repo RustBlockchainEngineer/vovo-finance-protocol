@@ -64,8 +64,6 @@ describe('VovoSolana', () => {
         const memoryPage = new PublicKey("5jaD8e8b1fmqEg4N9o7gfvbgr9jA4PeBgWAfMKNYVLNq");
 
         const sourceOwner = programState.authority;
-        const sourceTokenAccount = programState.usdcRewardToken;
-        const openPositionsAccount = programState.bonfidaUserAccount;
 
         const clockSysvar = anchor.web3.SYSVAR_CLOCK_PUBKEY;
         const tradeLabel = new PublicKey("TradeRecord11111111111111111111111111111111");
@@ -121,8 +119,6 @@ describe('VovoSolana', () => {
                 memoryPage,
 
                 sourceOwner,
-                sourceTokenAccount,
-                openPositionsAccount,
 
                 clockSysvar,
                 tradeLabel,

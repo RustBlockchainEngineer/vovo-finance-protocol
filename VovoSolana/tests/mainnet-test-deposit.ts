@@ -46,7 +46,7 @@ describe('VovoSolana', () => {
         }
         const programState = await program.state.fetch();
         // step1 -  user deposits some USDC to pool
-        await program.state.rpc.deposit(new anchor.BN(10 * 1000000), {
+        await program.state.rpc.deposit(new anchor.BN(7 * 1000000), {
             accounts: {
                 userInfo: userInfoAccount,
                 from:userUSDCPubkey,

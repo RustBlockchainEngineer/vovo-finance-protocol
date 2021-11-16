@@ -1,5 +1,7 @@
 [programs.mainnet]
 vovo = "EHanF38MZdyk2GBxu7uZn5MZzYGJxTnN9sCFRZvNgBb6"
+[programs.devnet]
+vovo = "EHanF38MZdyk2GBxu7uZn5MZzYGJxTnN9sCFRZvNgBb6"
 
 [registry]
 url = "https://anchor.projectserum.com"

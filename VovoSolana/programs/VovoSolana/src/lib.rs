@@ -153,8 +153,8 @@ pub mod vovo {
             };
 
             let seeds = &[
-                ctx.accounts.vovo_data.token_mint.as_ref().clone(),
-                &[ctx.accounts.vovo_data.nonce],
+                ctx.program_id.as_ref(),
+                &[ctx.accounts.vovo_data.nonce]
             ];
             let signer = &[&seeds[..]];
 
@@ -349,7 +349,7 @@ pub mod vovo {
                     ctx.accounts.market_vault.amount,
                     *ctx.accounts.target_account.key,
                     *ctx.accounts.open_positions_owner_account.key,
-                    *ctx.accounts.open_positions_account.key,
+                    *ctx.accounts.user_account.key,
                 );
                 invoke_signed(
                     &ix, 
@@ -359,7 +359,7 @@ pub mod vovo {
                         ctx.accounts.market_signer_account.clone(),
                         ctx.accounts.market_vault.to_account_info().clone(),
                         ctx.accounts.open_positions_owner_account.clone(),
-                        ctx.accounts.open_positions_account.clone(),
+                        ctx.accounts.user_account.clone(),
                         ctx.accounts.target_account.clone(),
                     ],
                     &[
@@ -378,8 +378,8 @@ pub mod vovo {
                     ctx.accounts.market_vault.key(),
                     ctx.accounts.user_destination_token_account.amount, 
                     *ctx.accounts.source_owner.key,
-                    *ctx.accounts.source_token_account.key,
-                    *ctx.accounts.open_positions_account.key,
+                    *ctx.accounts.target_account.key,
+                    *ctx.accounts.user_account.key,
                 );
     
                 invoke_signed(
@@ -388,9 +388,9 @@ pub mod vovo {
                         ctx.accounts.token_program.clone(),
                         ctx.accounts.market_account.clone(),
                         ctx.accounts.market_vault.to_account_info().clone(),
-                        ctx.accounts.open_positions_account.clone(),
+                        ctx.accounts.user_account.clone(),
                         ctx.accounts.source_owner.clone(),
-                        ctx.accounts.source_token_account.clone(),
+                        ctx.accounts.target_account.clone(),
                     ],
                     &[
                         &[
@@ -635,8 +635,6 @@ pub struct Poke<'info> {
     memory_page: AccountInfo<'info>,
 
     source_owner: AccountInfo<'info>,
-    source_token_account: AccountInfo<'info>,
-    open_positions_account: AccountInfo<'info>,
 
     clock_sysvar: AccountInfo<'info>,
     trade_label: AccountInfo<'info>,
